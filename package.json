@@ -1,0 +1,21 @@
+{
+  "name": "annotation-fx",
+  "version": "1.1.0",
+  "description": "Hand-drawn annotations (circles, underlines, arrows, notes) in 31 styles from science, art and history, for photos, video and web pages.",
+  "main": "annotationfx.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "serve": "zsh tools/serve.sh 8793",
+    "test": "node test/smoke.js",
+    "page": "node test/page.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hntw/annotation-fx.git"
+  },
+  "homepage": "https://hntw.github.io/annotation-fx/"
+}

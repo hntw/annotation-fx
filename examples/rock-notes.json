@@ -1,0 +1,8 @@
+{
+  "media": { "w": 1920, "h": 1080 },
+  "style": "apollo", "speed": "brisk", "scale": 1.6, "halo": true,
+  "marks": [
+    { "mark": "circle", "box": [140, 250, 1420, 640] },
+    { "mark": "arrow", "box": [1060, 520, 220, 160], "note": "sample 72255", "side": "top" }
+  ]
+}

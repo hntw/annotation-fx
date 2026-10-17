@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><title>frame</title>
+<!-- Transparent overlay frames for tools/render.mjs: window.frame(opts, t, W, H) -> PNG data URL. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Homemade+Apple&family=Caveat:wght@400;500;600&family=Caveat+Brush&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Architects+Daughter&family=Pinyon+Script&family=Jost:wght@500;700&family=Permanent+Marker&family=Bungee&family=Rock+Salt&family=UnifrakturMaguntia&family=Cinzel:wght@600&family=Uncial+Antiqua&family=Special+Elite&display=swap">
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script src="../annotationfx.js"></script>
+<script>
+// every style's font, loaded before the first frame (canvas text never waits for a web font)
+window.ready = Promise.all(AnnotationFX.styles.map(s => document.fonts.load('400 30px ' + s.font).catch(() => 0)))
+  .then(() => Promise.all(AnnotationFX.styles.map(s => document.fonts.load('italic 600 30px ' + s.font).catch(() => 0))));
+window.frame = function (opts, t, W, H) {
+  const c = document.getElementById('c'); c.width = W; c.height = H;
+  const x = c.getContext('2d'); x.clearRect(0, 0, W, H);
+  const m = opts.media || {};
+  AnnotationFX.draw(x, t, W, H, opts, { mediaW: m.w, mediaH: m.h });
+  return c.toDataURL('image/png');
+};
+window.len = (opts) => AnnotationFX.length(opts);
+</script>

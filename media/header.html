@@ -1,0 +1,95 @@
+<!doctype html><meta charset="utf-8">
+<!-- The README header and demo loop, drawn by annotationfx.js itself. window.render(t) paints frame t (seconds) of the
+     loop; ?t= paints that frame on load (no ?t: a showcase still). ?z= pixel ratio. Render: node media/anim.mjs -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:wght@400&family=Figtree:wght@400;500&family=JetBrains+Mono:wght@500&family=Homemade+Apple&family=Caveat:wght@600&family=Caveat+Brush&family=Pinyon+Script&family=Special+Elite&display=swap">
+<body style="margin:0;background:#e9ebe6">
+<canvas id="c"></canvas>
+<script src="../annotationfx.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const W = 1280, H = 640, Z = +(q.get('z') || 2);
+const GROUND = '#e9ebe6', INK = '#1d2126', MUTED = '#59616a', PENCIL = '#2e5bd0';
+const SERIF = '"Source Serif 4", Georgia, serif', DISPLAY = 'Gloock, Georgia, serif', SANS = 'Figtree, sans-serif', MONO = '"JetBrains Mono", monospace';
+const c = document.getElementById('c'), x = c.getContext('2d');
+c.width = W * Z; c.height = H * Z; c.style.width = W + 'px'; c.style.display = 'block';
+
+// the specimen page: Darwin's closing line (Origin, 1859, public domain), laid out word by word so marks can find words
+const P = { x: 560, y: 104, w: 664, h: 392 }, PAD = 46, FS = 31, LH = FS * 1.62;
+const TEXT = 'from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, evolved.';
+let words = [];
+function layout() {
+  x.font = `400 ${FS}px ${SERIF}`;
+  const sp = x.measureText(' ').width, maxW = P.w - PAD * 2;
+  let cx = 0, line = 0; words = [];
+  TEXT.split(' ').forEach(wd => {
+    const ww = x.measureText(wd).width;
+    if (cx > 0 && cx + ww > maxW) { cx = 0; line++; }
+    words.push({ wd, x: PAD + cx, line, w: ww }); cx += ww + sp;
+  });
+  const top = (P.h - (line + 1) * LH) / 2 - 34;
+  words.forEach(o => { o.y = top + o.line * LH + (LH - FS * 1.15) / 2; o.h = FS * 1.15; });
+}
+// box around word i..j (same line), in panel px
+const box = (i, j = i) => { const a = words[i], b = words[j]; return [a.x - 2, a.y, b.x + b.w - a.x + 4, a.h]; };
+
+// four hands, each the same three marks; snappy, then a short hold and a fade into the next
+const S = 4, IN = 0.15, FADE = 0.3;
+const SHOTS = [
+  { style: 'darwin', note: 'I think' },
+  { style: 'dali', note: 'soft forms' },
+  { style: 'picasso', note: 'forms!' },
+  { style: 'bletchley', note: 'decrypt by 0900' }
+];
+const LOOP = S * SHOTS.length;
+const byId = {}; AnnotationFX.styles.forEach(s => byId[s.id] = s);
+const paperOf = s => s.paper || (s.ground === 'dark' ? '#1d232a' : '#f4f1e8');
+const seg = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+
+function render(t) {
+  t = ((t % LOOP) + LOOP) % LOOP;
+  const k = Math.floor(t / S), ts = t - k * S, shot = SHOTS[k], st = byId[shot.style];
+  const out = 1 - seg(ts, S - FADE, S);
+  x.setTransform(Z, 0, 0, Z, 0, 0);
+  x.fillStyle = GROUND; x.fillRect(0, 0, W, H);
+
+  // title card (complete from frame 0): eyebrow, title circled by the library in red pencil, line, facts
+  x.fillStyle = PENCIL; x.font = `500 13px ${MONO}`; x.letterSpacing = '2px';
+  x.fillText('MOTION GRAPHICS LIBRARY', 64, 176); x.letterSpacing = '0px';
+  x.fillStyle = INK; x.font = `400 68px ${DISPLAY}`; x.textBaseline = 'alphabetic';
+  const aw = x.measureText('Annotation ').width, fw = x.measureText('FX').width;
+  x.fillText('Annotation FX', 60, 272);
+  AnnotationFX.draw(x, 20, W, H, { style: 'perkins', mark: 'circle', box: [60 + aw - 4, 216, fw + 8, 66], seed: 3 });
+  x.fillStyle = MUTED; x.font = `400 21px ${SANS}`;
+  ['Circles, underlines, arrows and notes that', 'draw themselves, in 31 hands from science,', 'art and history.'].forEach((l, i) => x.fillText(l, 64, 360 + i * 31));
+  x.fillStyle = INK; x.font = `500 14px ${MONO}`;
+  x.fillText('31 styles   10 marks   1 file', 64, 488);
+
+  // the page with this shot's marks
+  x.save();
+  x.beginPath(); x.roundRect(P.x, P.y, P.w, P.h, 6); x.clip();
+  x.fillStyle = paperOf(st); x.fillRect(P.x, P.y, P.w, P.h);
+  x.translate(P.x, P.y);
+  x.fillStyle = st.ground === 'dark' ? '#e9e6dc' : '#23211c'; x.font = `400 ${FS}px ${SERIF}`; x.textBaseline = 'top';
+  words.forEach(o => x.fillText(o.wd, o.x, o.y + FS * 0.08));
+  x.textBaseline = 'alphabetic';
+  const wi = w => words.findIndex(o => o.wd === w);
+  const mb = words.findIndex((o, i) => o.wd === 'most' && words[i + 1].wd === 'beautiful');
+  AnnotationFX.draw(x, ts, P.w, P.h, { style: shot.style, speed: 1.7, delay: IN, scale: 2.1, opacity: out, seed: 7,
+    marks: [{ mark: 'circle', box: box(wi('simple')) }, { mark: 'underline', box: box(mb, mb + 1) },
+      { mark: 'arrow', box: box(wi('evolved.')), side: 'bottom', note: shot.note }] });
+  x.restore();
+  x.strokeStyle = 'rgba(29,33,38,0.16)'; x.lineWidth = 1; x.beginPath(); x.roundRect(P.x + 0.5, P.y + 0.5, P.w - 1, P.h - 1, 6); x.stroke();
+
+  // the code that made it, under the page
+  x.globalAlpha = Math.min(seg(ts, 0, 0.25), out);
+  x.fillStyle = PENCIL; x.font = `500 14px ${MONO}`;
+  x.fillText(`style: '${shot.style}'   ${st.who}, ${st.year}`, P.x, P.y + P.h + 34);
+  x.globalAlpha = 1;
+}
+
+window.LOOP = LOOP; window.render = render;
+window.ready = Promise.all([`400 68px ${DISPLAY}`, `400 ${FS}px ${SERIF}`, `400 21px ${SANS}`, `500 14px ${MONO}`,
+  "24px 'Homemade Apple'", "600 30px Caveat", "32px 'Caveat Brush'", "34px 'Pinyon Script'", "21px 'Special Elite'"]
+  .map(f => document.fonts.load(f)))
+  .then(() => { layout(); render(q.has('t') ? +q.get('t') : 3.4); document.title = 'ready'; });
+</script>

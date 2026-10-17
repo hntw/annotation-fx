@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>Annotation FX</title>
+<meta name="description" content="Hand-drawn annotations in 31 styles from science, art and history, for photos, video and web pages.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Homemade+Apple&family=Caveat:wght@400;500;600&family=Caveat+Brush&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Architects+Daughter&family=Pinyon+Script&family=Jost:wght@500;700&family=Permanent+Marker&family=Bungee&family=Rock+Salt&family=UnifrakturMaguntia&family=Cinzel:wght@600&family=Uncial+Antiqua&family=Special+Elite&display=swap">
+<style>
+/* Layout: a collections drawer. The title annotates itself, a working bench, then 31 specimen cards in three drawers. */
+:root {
+  --ground: #e9ebe6;
+  --sheet: #f7f8f4;
+  --ink: #1b2129;
+  --muted: #59616b;
+  --rule: #cfd3cb;
+  --pencil: #2e5bd0;
+  --pencil-ink: #2449a8;
+  --chip: #dfe2dc;
+  --chip-on: #1b2129;
+  --chip-on-ink: #f7f8f4;
+  --code-bg: #e2e5df;
+  --stage: #0e1217;
+  --specimen: #f4f1e8;
+  --specimen-ink: #23211c;
+  --display: "Gloock", "Bodoni 72", Didot, Georgia, serif;
+  --text: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --body: "Figtree", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #12161b; --sheet: #191e24; --ink: #e5e8ea; --muted: #9ba3ac; --rule: #2a313a;
+    --pencil: #7d9cf0; --pencil-ink: #9fb6f5; --chip: #222931; --chip-on: #e5e8ea; --chip-on-ink: #12161b;
+    --code-bg: #0d1115; --stage: #06090c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #12161b; --sheet: #191e24; --ink: #e5e8ea; --muted: #9ba3ac; --rule: #2a313a;
+  --pencil: #7d9cf0; --pencil-ink: #9fb6f5; --chip: #222931; --chip-on: #e5e8ea; --chip-on-ink: #12161b;
+  --code-bg: #0d1115; --stage: #06090c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); padding: 0 16px; padding-block: 0 64px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 64px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.05; }
+h2 { font-size: clamp(32px, 4.6vw, 48px); }
+h3 { font-size: 22px; }
+p { margin: 0; max-width: 66ch; }
+.lede { color: var(--muted); font-size: 17px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--pencil-ink); }
+section { display: grid; gap: 22px; }
+.head { display: grid; gap: 10px; }
+a { color: inherit; text-decoration-color: var(--pencil); text-underline-offset: 3px; }
+code, pre { font-family: var(--mono); font-size: 13px; }
+:focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
+
+/* hero */
+.hero { padding-top: 56px; display: grid; gap: 18px; }
+.hero-mark { position: relative; padding: 40px 120px 70px 14px; margin-left: -14px; justify-self: start; max-width: 100%; }
+.hero h1 { font-size: clamp(60px, 13vw, 150px); line-height: 0.92; letter-spacing: -0.01em; }
+.hero h1 span { display: inline-block; }
+.hero .lede { font-size: 19px; }
+.hero-row { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; font: 500 13px var(--mono); color: var(--muted); }
+.facts b { color: var(--ink); font-weight: 500; }
+.now { font: 500 13px var(--mono); color: var(--muted); }
+
+/* bench */
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.stagecol { display: grid; gap: 8px; min-width: 0; }
+.stage { position: relative; margin: 0; background: var(--stage); border-radius: 4px; overflow: hidden; touch-action: none; }
+.stage img, .stage video { display: block; width: 100%; height: auto; }
+.page { position: relative; background: var(--specimen); color: var(--specimen-ink); padding: clamp(24px, 5vw, 56px); font: 400 clamp(17px, 2vw, 21px)/1.7 var(--text); }
+.page p { max-width: 34em; }
+.drawbox { position: absolute; border: 2px dashed var(--pencil); background: rgba(46, 91, 208, 0.12); pointer-events: none; z-index: 9; }
+.stage.drawing { cursor: crosshair; user-select: none; }
+.status { font: 13px var(--mono); color: var(--muted); min-height: 1.5em; }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 16px; display: grid; gap: 14px; }
+.ctl { display: grid; gap: 6px; }
+.ctl > span { font: 500 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chips i { flex-basis: 100%; font: italic 400 13px var(--text); color: var(--muted); margin-top: 4px; }
+.chip { font: 500 13px/1 var(--body); padding: 7px 9px; border-radius: 3px; border: 1px solid var(--rule); background: var(--chip); color: var(--ink); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-ink); border-color: var(--chip-on); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > * { flex: 1 1 0; min-width: 0; }
+input { font: 500 14px var(--body); padding: 8px 9px; border: 1px solid var(--rule); border-radius: 3px; background: var(--ground); color: var(--ink); width: 100%; }
+.btn { font: 600 14px var(--body); padding: 9px 12px; border-radius: 3px; border: 1px solid var(--ink); background: var(--ink); color: var(--ground); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn[aria-pressed="true"] { background: var(--pencil); border-color: var(--pencil); color: #fff; }
+.note { font-size: 13px; color: var(--muted); }
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; overflow-x: auto; line-height: 1.5; }
+.codebox { position: relative; min-width: 0; }
+.copy { position: absolute; top: 8px; right: 8px; font: 500 11px var(--mono); padding: 5px 8px; border-radius: 3px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer; }
+
+/* drawers */
+.drawer-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; border-bottom: 1px solid var(--rule); padding-bottom: 10px; }
+.drawer-head h3 { font-size: 30px; }
+.drawer-head span { font: 500 12px var(--mono); color: var(--muted); }
+.grid { display: grid; gap: 22px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tile { margin: 0; display: grid; gap: 10px; align-content: start; }
+.frame { position: relative; border-radius: 3px; overflow: hidden; cursor: pointer; background: var(--specimen); color: var(--specimen-ink); box-shadow: 0 1px 0 rgba(0,0,0,0.06); }
+.spec { position: relative; padding: 30px 26px 84px; min-height: 250px; }
+.spec p { font: 400 19px/1.6 var(--text); max-width: 15em; }
+.tile figcaption { display: grid; gap: 3px; }
+.tile .who { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.tile .who h4 { margin: 0; font: 400 21px/1.1 var(--display); }
+.tile .yr { font: 500 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tile .id { font: 500 12px var(--mono); color: var(--pencil-ink); }
+.tile figcaption p { font-size: 14px; color: var(--muted); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font: 500 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+footer { border-top: 1px solid var(--rule); padding-top: 18px; font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+
+/* timing demos */
+.cues { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.cue { display: grid; gap: 10px; min-width: 0; align-content: start; }
+.scroller { position: relative; height: 340px; overflow-y: auto; border-radius: 4px; background: var(--specimen); color: var(--specimen-ink); overscroll-behavior: contain; }
+.scroller .page { background: transparent; padding: 26px 34px 110px; font-size: 19px; }
+.scroller .page p + p { margin-top: 1em; }
+.scroller .hint { font: 500 12px var(--mono); color: #6f6a5e; letter-spacing: 0.08em; text-transform: uppercase; padding-bottom: 150px; }
+.typer { position: relative; overflow: hidden; min-height: 340px; border-radius: 4px; background: var(--stage); color: #f1ede3; padding: 40px 34px 90px; display: grid; align-content: center; }
+.typer p { font: 400 clamp(22px, 2.6vw, 30px)/1.5 var(--text); max-width: 18em; }
+.typer .c { opacity: 0; }
+.typer .c.on { opacity: 1; }
+
+@media (max-width: 980px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .bench, .two, .cues { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 620px) { .grid { grid-template-columns: minmax(0, 1fr); } .hero-mark { padding-right: 40px; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Motion graphics library · v1.1</div>
+    <div class="hero-mark" id="heroBox"><h1><span id="hA">Annotation</span> <span id="hF">FX</span></h1></div>
+    <p class="lede">Circles, underlines, arrows and margin notes that draw themselves, in the hands of 31 people from science, art and history. Lyell lays highlights down as rock strata. Darwin's arrows branch into a tree. Dalí's circles melt. Point it at a word, a face in a photo or an object in running video.</p>
+    <div class="hero-row">
+      <button class="btn" id="shuffle" type="button">Another hand</button>
+      <span class="now" id="heroNow"></span>
+    </div>
+    <div class="facts"><span><b>31</b> styles</span><span><b>10</b> marks</span><span><b>21</b> pens</span><span><b>1</b> file, no dependencies</span></div>
+  </header>
+
+  <section id="try">
+    <div class="head">
+      <div class="eyebrow">Try it</div>
+      <h2>Mark something up</h2>
+      <p class="lede">Pick a stage, a hand and a mark, then type a note. Draw box lets you drag over the stage to choose what gets marked.</p>
+    </div>
+    <div class="bench">
+      <div class="stagecol">
+        <div class="chips" id="stageKind" role="group" aria-label="Stage"></div>
+        <figure class="stage" id="stagePhoto"><img id="photo" draggable="false" src="media/demo/rock-72255-wide.jpg" alt="Apollo 17 lunar sample 72255, a light grey breccia, on a turntable" width="1920" height="1080"></figure>
+        <figure class="stage" id="stageText" hidden><div class="page" id="pageText"><p>Thus, from the war of nature, from famine and death, the most exalted object which we are capable of conceiving, namely, the production of the higher animals, directly follows. There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so <span id="tSimple">simple a beginning</span> endless forms most beautiful and most wonderful have been, and are being, <span id="tEvolved">evolved.</span></p></div></figure>
+        <figure class="stage" id="stageVideo" hidden><video id="vid" src="media/demo/rock-pushin.mp4" muted loop playsinline preload="auto" width="1280" height="720" aria-label="A slow push-in on sample 72255"></video></figure>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="panel">
+        <div class="ctl"><span>Hand</span><div class="chips" id="style"></div></div>
+        <div class="ctl"><span>Mark</span><div class="chips" id="mark"></div></div>
+        <div class="ctl"><span>Speed</span><div class="chips" id="speed"></div></div>
+        <div class="ctl"><label for="noteIn" style="font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Note</label><input id="noteIn" type="text" maxlength="60" value=""></div>
+        <div class="row"><button class="btn" id="replay" type="button">Replay</button><button class="btn ghost" id="drawBtn" type="button" aria-pressed="false">Draw box</button></div>
+        <p class="note" id="aboutStyle"></p>
+      </div>
+    </div>
+    <div class="codebox"><button class="copy" type="button" data-copy="code">Copy</button><pre id="code"></pre></div>
+  </section>
+
+  <section id="styles">
+    <div class="head"><div class="eyebrow">The collection</div><h2>Thirty-one hands</h2>
+      <p class="lede">Every card marks the same closing line from <i>On the Origin of Species</i> (1859): a circle, an underline and an arrow with a note. Each hand brings its own pen, wobble, paper and habits. Click a card to watch it again.</p></div>
+    <div class="drawer-head"><h3>Science</h3><span id="nScience"></span></div>
+    <div class="grid" id="gScience"></div>
+    <div class="drawer-head"><h3>Art</h3><span id="nArt"></span></div>
+    <div class="grid" id="gArt"></div>
+    <div class="drawer-head"><h3>History</h3><span id="nHistory"></span></div>
+    <div class="grid" id="gHistory"></div>
+  </section>
+
+  <section id="timing">
+    <div class="head"><div class="eyebrow">Timing</div><h2>Fire it when the words arrive</h2>
+      <p class="lede">Every mark can wait for a cue. Let the page fire each one as its words scroll into view, or fire them yourself from code the moment your text lands: a typed line, a caption, a slide coming in. Both demos use the hand and speed picked above.</p></div>
+    <div class="cues">
+      <div class="cue">
+        <h3>As it scrolls in</h3>
+        <div class="scroller" id="scroller"><div class="page" id="scrollPage">
+          <div class="hint">Scroll down</div>
+          <p>It is interesting to contemplate a <span id="sBank">tangled bank</span>, clothed with many plants of many kinds, with birds singing on the bushes, with various insects flitting about, and with worms crawling through the damp earth, and to reflect that these elaborately constructed forms, so different from each other, and dependent upon each other in so complex a manner, have all been produced by laws acting around us.</p>
+          <p>These laws, taken in the highest sense, being <span id="sGrowth">Growth with Reproduction</span>; Inheritance which is almost implied by reproduction; <span id="sVar">Variability</span> from the indirect and direct action of the conditions of life, and from use and disuse: a Ratio of Increase so high as to lead to a Struggle for Life, and as a consequence to <span id="sSel">Natural Selection</span>, entailing Divergence of Character and the Extinction of less-improved forms.</p>
+          <p>Thus, from the war of nature, from famine and death, the most exalted object which we are capable of conceiving, namely, the production of the higher animals, directly follows. There is grandeur in this view of life, with its several powers, having been originally breathed into a few forms or into one; and that, whilst this planet has gone cycling on according to the fixed law of gravity, from so simple a beginning endless forms most beautiful and most wonderful have been, and are being, <span id="sEvolved">evolved.</span></p>
+        </div></div>
+        <p class="note" id="scrollLog">Each mark fires when its words are half in view. Scroll back up and down: repeat re-arms them.</p>
+        <div class="codebox"><button class="copy" type="button" data-copy="cScroll">Copy</button><pre id="cScroll"></pre></div>
+      </div>
+      <div class="cue">
+        <h3>When your code says so</h3>
+        <div class="typer" id="typer"><p id="typeLine"></p></div>
+        <div class="row"><button class="btn" id="typeAgain" type="button">Type it again</button></div>
+        <div class="codebox"><button class="copy" type="button" data-copy="cType">Copy</button><pre id="cType"></pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="use">
+    <div class="head"><div class="eyebrow">Drop it in</div><h2>Use it on a page or in a video</h2></div>
+    <div class="two">
+      <div style="display:grid;gap:10px;min-width:0">
+        <h3>On a web page</h3>
+        <p class="note">Give a box as a CSS selector and it measures the element every frame, so the mark follows reflow. It waits until the element is half visible, then draws once. Reduced motion shows the finished frame.</p>
+        <div class="codebox"><button class="copy" type="button" data-copy="c1">Copy</button><pre id="c1">&lt;script src="annotationfx.js"&gt;&lt;/script&gt;
+&lt;p id="quote"&gt;from so &lt;span id="w1"&gt;simple&lt;/span&gt; a beginning ...
+  &lt;span id="w3"&gt;evolved.&lt;/span&gt;&lt;/p&gt;
+&lt;script&gt;
+  AnnotationFX.play('#quote', {
+    style: 'darwin', bleed: 40,
+    marks: [
+      { mark: 'circle', box: '#w1' },
+      { mark: 'arrow',  box: '#w3', note: 'I think' }
+    ]
+  });
+&lt;/script&gt;</pre></div>
+        <p class="note">No code: put the options on the element and load the script with <code>data-auto</code>.</p>
+        <div class="codebox"><button class="copy" type="button" data-copy="c2">Copy</button><pre id="c2">&lt;p data-annotate='{"style":"dali","mark":"circle","box":"#w1"}'&gt;...&lt;/p&gt;
+&lt;button data-annotate-replay="p"&gt;Replay&lt;/button&gt;
+&lt;script src="annotationfx.js" data-auto&gt;&lt;/script&gt;</pre></div>
+      </div>
+      <div style="display:grid;gap:10px;min-width:0">
+        <h3>Over photos and video</h3>
+        <p class="note">On an image or video, boxes are in the media's own pixels and respect object-fit. For video, give keyframes in seconds: the mark reads the video's clock, so it holds through a pause or a seek.</p>
+        <div class="codebox"><button class="copy" type="button" data-copy="c3">Copy</button><pre id="c3">AnnotationFX.play(video, {
+  style: 'feynman',
+  mark: 'circle', note: 'draw the diagram',
+  box: [{ t: 0, x: 79, y: 155, w: 975, h: 453 },
+        { t: 6, x: 65, y: 92,  w: 1150, h: 535 }]
+});
+
+// any canvas, any frame: a pure function of time
+AnnotationFX.draw(ctx, t, 1920, 1080, { style: 'lyell',
+  mark: 'highlight', box: [118, 232, 1462, 680] });</pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="options">
+    <div class="head"><div class="eyebrow">Reference</div><h2>Options</h2></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Option</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>style</td><td id="optStyles"></td></tr>
+        <tr><td>mark</td><td>circle, box, underline, strike, cross, highlight, bracket, arrow, note, connect</td></tr>
+        <tr><td>box</td><td>What to mark: [x, y, w, h], {x, y, w, h}, keyframes [{t, x, y, w, h}], a function of time, or a CSS selector or element.</td></tr>
+        <tr><td>note</td><td>Text written beside the mark with a leader line. It goes to the side with the most room unless you set side.</td></tr>
+        <tr><td>side, from</td><td>right, left, top, bottom or auto for the note; from: the point an arrow starts at.</td></tr>
+        <tr><td>to</td><td>connect: the second box. The line runs from box to to.</td></tr>
+        <tr><td>space, fit</td><td>px (media pixels, default on images and video), norm (0 to 1) or css.</td></tr>
+        <tr><td>color, accent, textColor, highlightColor, font</td><td>Recolor any style or swap its handwriting.</td></tr>
+        <tr><td>scale, size, noteSize, noteWidth, pad, rough</td><td>Overall size, text size and wrap width, room around the box, and how shaky the hand is (0 is steady).</td></tr>
+        <tr><td>halo</td><td>A soft outline so ink reads over busy photos. true picks dark or light from the ink.</td></tr>
+        <tr><td>speed</td><td>How fast the hand draws: a number (2 is twice as fast) or slow, calm, normal, brisk, fast, snap. Set it once or per mark. It never moves an explicit delay.</td></tr>
+        <tr><td>duration, tempo, delay, stagger, hold, out</td><td>Timing. delay: seconds after start, or 'wait' to hold the mark until it is fired. hold: 3 removes it 3 s after it lands, by fade or erase.</td></tr>
+        <tr><td>id</td><td>A name for a mark, so fire('name') can start it.</td></tr>
+        <tr><td>marks</td><td>Several marks in one overlay, each with its own options. They draw in order.</td></tr>
+        <tr><td>bleed</td><td>Pixels the overlay may extend past the element, so notes can run into the margin.</td></tr>
+        <tr><td>when, threshold, rootMargin, repeat</td><td>Start when the element is visible (default), now, manual (call start or fire), or each: every mark whose box is an element fires as that element scrolls in. threshold and rootMargin tune "in view". repeat: true clears on leave and draws again on return.</td></tr>
+        <tr><td>sync</td><td>Video only. 'media' runs the clock on video.currentTime, so delay: 3.2 means 3.2 s into the video. It follows pause, seek and loop.</td></tr>
+        <tr><td>onStart, onMark, onDone</td><td>Hooks. Each also fires as a bubbling DOM event: annotationfx:start, annotationfx:mark (detail: index, id, mark, time), annotationfx:done.</td></tr>
+        <tr><td>end, reducedMotion</td><td>Hold or clear at the end; hold, play or skip under reduced motion.</td></tr>
+        <tr><td>handle</td><td>play() returns start, stop, replay, pause, resume, fire, reset, seek(t) and time(). AnnotationFX.fire(el, which) does the same from anywhere.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>
+    <div>Text: Charles Darwin, <i>On the Origin of Species</i> (1859), closing paragraph, public domain. Photo: NASA Johnson Space Center, S73-16007, Apollo 17 lunar sample 72255 (public domain). The push-in clip is a camera move made from that still.</div>
+    <div>The styles are homages drawn from each figure's known habits, not reproductions of their work. Notes on the cards are ours, not quotes. Made for fun by Jamie Grove and Claude. Source and docs: <a href="https://github.com/hntw/annotation-fx">github.com/hntw/annotation-fx</a> (MIT).</div>
+  </footer>
+</div>
+
+<script src="annotationfx.js"></script>
+<script>
+(function () {
+  var A = window.AnnotationFX;
+  var $ = function (id) { return document.getElementById(id); };
+  var ROCK = [118, 232, 1462, 680];
+  var NOTES = {
+    lyell: 'older beds below', darwin: 'I think', davinci: 'the eye deceives', hooke: 'as seen through the glass', newton: 'Q.E.D.',
+    galileo: 'a new world', haeckel: 'art forms of nature', cajal: 'signal runs this way', feynman: 'draw the diagram',
+    nightingale: 'preventable!', edison: '12', leavitt: 'variable?', picasso: 'forms!', dali: 'soft forms', vangogh: 'the stars move',
+    matisse: 'drawing with scissors', mondrian: 'no curves', kandinsky: 'point, line, plane', pollock: 'let it fly',
+    hokusai: 'the wave rises', warhol: 'POP!', haring: 'radiant', lascaux: 'we were here', scriptorium: 'Nota bene',
+    champollion: 'a royal name', bayeux: 'HIC: ENDLESS FORMS', mercator: 'terra incognita', minard: '422,000 set out',
+    bletchley: 'decrypt by 0900', apollo: 'GO FOR TLI', perkins: 'cut this?'
+  };
+  var byId = {}; A.styles.forEach(function (s) { byId[s.id] = s; });
+  function yr(y) { return y < 0 ? Math.abs(y).toLocaleString('en-US') + ' BCE' : String(y); }
+  function frameBg(s) { return s.paper || (s.ground === 'dark' ? '#1d232a' : '#f4f1e8'); }
+  function frameInk(s) { return s.ground === 'dark' ? '#e9e6dc' : '#23211c'; }
+
+  // catalog
+  function tile(s) {
+    var fig = document.createElement('figure'); fig.className = 'tile';
+    fig.innerHTML = '<div class="frame" tabindex="0" role="button"><div class="spec"><p>from so <span class="w1">simple</span> a beginning endless forms <span class="w2">most beautiful</span> and most wonderful have been, and are being, <span class="w3">evolved.</span></p></div></div>' +
+      '<figcaption><div class="who"><h4></h4><span class="yr"></span></div><span class="id"></span><p></p></figcaption>';
+    var fr = fig.querySelector('.frame'), spec = fig.querySelector('.spec');
+    fr.style.background = frameBg(s); fr.style.color = frameInk(s);
+    fr.setAttribute('aria-label', 'Replay ' + s.name);
+    fig.querySelector('h4').textContent = s.name;
+    fig.querySelector('.yr').textContent = s.who + ', ' + yr(s.year);
+    fig.querySelector('.id').textContent = "style: '" + s.id + "'";
+    fig.querySelector('figcaption p').textContent = s.about;
+    $('g' + A.fields[s.field]).appendChild(fig);
+    var o = { style: s.id, scale: 1.45, stagger: 0.7, marks: [
+      { mark: 'circle', box: '.w1' }, { mark: 'underline', box: '.w2' }, { mark: 'arrow', box: '.w3', side: 'bottom', note: NOTES[s.id] || '' }] };
+    A.play(spec, o);
+    var again = function () { A.play(spec, Object.assign({}, o, { when: 'now' })); };
+    fr.addEventListener('click', again);
+    fr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); again(); } });
+  }
+  ['science', 'art', 'history'].forEach(function (f) {
+    var list = A.styles.filter(function (s) { return s.field === f; });
+    $('n' + A.fields[f]).textContent = list.length + ' styles';
+  });
+  $('optStyles').textContent = A.styles.map(function (s) { return s.id; }).join(', ');
+
+  // hero: the title marks itself, in a different hand each time
+  var order = ['darwin', 'dali', 'lyell', 'picasso', 'feynman', 'scriptorium', 'mondrian', 'bletchley', 'vangogh', 'davinci', 'minard', 'haring'], hi = 0;
+  function hero() {
+    var s = byId[order[hi % order.length]], ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+    var dark = s.ground === 'dark' || parseFloat(getComputedStyle(document.body).backgroundColor.replace(/[^\d,]/g, '').split(',')[0]) < 128;
+    $('heroNow').textContent = 'Now: ' + s.name + ' (' + s.who + ', ' + yr(s.year) + ')';
+    A.play($('heroBox'), { style: s.id, when: 'now', scale: 2.4, stagger: 0.8, color: dark ? ink : undefined, marks: [
+      { mark: 'circle', box: '#hF' }, { mark: 'underline', box: '#hA' }, { mark: 'note', box: '#hF', note: (NOTES[s.id] || '').replace('?', '') || 'look here', side: innerWidth > 700 ? 'right' : 'bottom' }] });
+  }
+  $('shuffle').addEventListener('click', function () { hi++; hero(); });
+
+  // bench
+  var st = { stage: 'photo', style: 'darwin', mark: 'circle', note: '', speed: 'normal', box: { photo: ROCK.slice(), text: '#tSimple' } };
+  var keys = null;
+  function chips(el, items, get, set) {
+    el.innerHTML = '';
+    items.forEach(function (it) {
+      if (it[0] === '|') { var i = document.createElement('i'); i.textContent = it[1]; el.appendChild(i); return; }
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = it[1];
+      b.setAttribute('aria-pressed', String(get() === it[0]));
+      b.addEventListener('click', function () { set(it[0]); refresh(); });
+      el.appendChild(b);
+    });
+  }
+  function target() { return st.stage === 'photo' ? $('photo') : st.stage === 'text' ? $('pageText') : $('vid'); }
+  function opts() {
+    var o = { style: st.style, mark: st.mark };
+    if (st.speed !== 'normal') o.speed = st.speed;
+    if (st.stage === 'photo') o.box = st.box.photo;
+    else if (st.stage === 'text') o.box = st.box.text;
+    else o.box = keys || ROCK;
+    if (st.note) o.note = st.note;
+    if (st.mark === 'connect') o.to = st.stage === 'text' ? '#tEvolved' : [1500, 80, 300, 120];
+    if (st.stage !== 'text') { o.halo = true; o.scale = 1.8; }
+    if (st.stage === 'text') o.bleed = 0;
+    return o;
+  }
+  function lit(v) {
+    if (typeof v === 'string') return "'" + v + "'";
+    if (typeof v === 'number') return String(Math.round(v * 10) / 10);
+    if (typeof v === 'boolean') return String(v);
+    if (Array.isArray(v)) return v.length > 4 && typeof v[0] === 'object' ? '[ /* ' + v.length + ' keyframes */ ]' : '[' + v.map(lit).join(', ') + ']';
+    return '{ ' + Object.keys(v).map(function (k) { return k + ': ' + lit(v[k]); }).join(', ') + ' }';
+  }
+  function play() {
+    var o = opts(), name = st.stage === 'photo' ? 'img' : st.stage === 'text' ? 'paragraph' : 'video';
+    $('code').textContent = 'AnnotationFX.play(' + name + ', {\n' + Object.keys(o).map(function (k) { return '  ' + k + ': ' + lit(o[k]); }).join(',\n') + '\n});';
+    ['photo', 'pageText', 'vid'].forEach(function (id) { A.stop($(id)); });
+    A.play(target(), Object.assign({ when: 'now' }, o));
+  }
+  function refresh() {
+    chips($('stageKind'), [['photo', 'Photo'], ['text', 'Text'], ['video', 'Video']], function () { return st.stage; }, function (v) { st.stage = v; });
+    var items = [];
+    ['science', 'art', 'history'].forEach(function (f) {
+      items.push(['|', A.fields[f]]);
+      A.styles.filter(function (s) { return s.field === f; }).forEach(function (s) { items.push([s.id, s.name]); });
+    });
+    chips($('style'), items, function () { return st.style; }, function (v) { st.style = v; });
+    chips($('mark'), A.marks.map(function (m) { return [m, m.charAt(0).toUpperCase() + m.slice(1)]; }), function () { return st.mark; }, function (v) { st.mark = v; });
+    chips($('speed'), [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast'], ['snap', 'Snap']], function () { return st.speed; }, function (v) { st.speed = v; });
+    $('stagePhoto').hidden = st.stage !== 'photo'; $('stageText').hidden = st.stage !== 'text'; $('stageVideo').hidden = st.stage !== 'video';
+    var vid = $('vid');
+    if (st.stage === 'video') vid.play().catch(function () { vid.controls = true; }); else vid.pause();
+    $('drawBtn').disabled = st.stage === 'video';
+    var s = byId[st.style];
+    $('aboutStyle').textContent = s.who + ', ' + yr(s.year) + '. ' + s.about;
+    $('noteIn').placeholder = 'e.g. ' + (NOTES[st.style] || 'look here');
+    $('status').textContent = st.stage === 'video' ? 'The box follows keyframes on the video clock.' : boxText();
+    play();
+    if (cueKey !== st.style + st.speed) { cueKey = st.style + st.speed; scrollCue(); typeCue(); }
+  }
+
+  // timing demos: marks that wait for their words
+  var cueKey = '';
+  function sp() { return st.speed === 'normal' ? '' : "  speed: '" + st.speed + "',\n"; }
+  function paper(el) { var s = byId[st.style]; el.style.background = frameBg(s); el.style.color = frameInk(s); }
+  function scrollCue() {
+    var page = $('scrollPage'), names = { circle: 'tangled bank', underline: 'Growth with Reproduction', highlight: 'Variability', box: 'Natural Selection', arrow: 'evolved.' };
+    paper($('scroller'));
+    $('scrollLog').textContent = 'Each mark fires when its words are half in view. Scroll back up and down: repeat re-arms them.';
+    A.play(page, { style: st.style, speed: st.speed, scale: 1.4, when: 'each', repeat: true, marks: [
+      { mark: 'circle', box: '#sBank' }, { mark: 'underline', box: '#sGrowth' }, { mark: 'highlight', box: '#sVar' },
+      { mark: 'box', box: '#sSel' }, { mark: 'arrow', box: '#sEvolved', side: 'bottom', note: NOTES[st.style] || 'look here' }],
+      onMark: function (d) { $('scrollLog').textContent = 'Fired: ' + d.mark + " on '" + names[d.mark] + "' at " + d.time.toFixed(1) + ' s (onMark hook).'; } });
+    $('cScroll').textContent = "AnnotationFX.play(article, {\n  style: '" + st.style + "',\n" + sp() +
+      "  when: 'each',     // each mark fires as its words scroll in\n  repeat: true,     // clear on leave, draw again on return\n" +
+      "  marks: [\n    { mark: 'circle',    box: '#bank' },\n    { mark: 'underline', box: '#growth' },\n    { mark: 'box',       box: '#selection' }\n  ],\n" +
+      "  onMark: function (e) { console.log(e.mark, e.time); }\n});";
+  }
+  var TYPE = [['from so '], ['simple', 'simple'], [' a beginning endless forms '], ['most beautiful', 'beautiful'], [' and most wonderful have been, and are being, '], ['evolved.', 'evolved']];
+  var typeTimer = 0;
+  function typeCue() {
+    var line = $('typeLine'), s = byId[st.style];
+    clearTimeout(typeTimer); A.stop(line);
+    paper($('typer'));
+    line.innerHTML = '';
+    var chars = [], ends = [];
+    TYPE.forEach(function (seg) {
+      var host = line;
+      if (seg[1]) { host = document.createElement('span'); host.id = 'ty-' + seg[1]; line.appendChild(host); }
+      seg[0].split('').forEach(function (ch) { var c = document.createElement('span'); c.className = 'c'; c.textContent = ch; host.appendChild(c); chars.push(c); });
+      if (seg[1]) ends.push([chars.length, seg[1]]);
+    });
+    var h = A.play(line, { style: st.style, speed: st.speed, scale: 1.6, when: 'now', delay: 'wait', bleed: 80, marks: [
+      { id: 'simple', mark: 'circle', box: '#ty-simple' }, { id: 'beautiful', mark: 'underline', box: '#ty-beautiful' },
+      { id: 'evolved', mark: 'arrow', box: '#ty-evolved', side: 'bottom', note: NOTES[st.style] || 'look here' }] });
+    var i = 0, ms = 46 / ({ slow: 0.6, fast: 1.7, snap: 2.6 }[st.speed] || 1);
+    (function tick() {
+      if (i >= chars.length) return;
+      chars[i++].classList.add('on');
+      ends.forEach(function (e) { if (e[0] === i && h) h.fire(e[1]); });
+      typeTimer = setTimeout(tick, chars[i - 1].textContent === ' ' ? ms * 0.5 : ms);
+    })();
+    $('cType').textContent = "var fx = AnnotationFX.play(line, {\n  style: '" + s.id + "',\n" + sp() +
+      "  delay: 'wait',    // nothing draws until it is fired\n  marks: [\n    { id: 'simple',    mark: 'circle',    box: '#simple' },\n" +
+      "    { id: 'beautiful', mark: 'underline', box: '#beautiful' },\n    { id: 'evolved',   mark: 'arrow',     box: '#evolved', note: '...' }\n  ]\n});\n\n" +
+      "// your typing, caption or slide code:\nonWordTyped(function (word) { fx.fire(word); });";
+  }
+  $('typeAgain').addEventListener('click', typeCue);
+  function boxText() {
+    if (st.stage === 'text') return typeof st.box.text === 'string' ? 'Box: ' + st.box.text + ' (a selector, measured each frame)' : 'Box: ' + st.box.text.join(', ') + ' (CSS pixels)';
+    return 'Box: ' + st.box.photo.join(', ') + ' (photo pixels)';
+  }
+  $('noteIn').addEventListener('input', function () { st.note = this.value.trim(); play(); });
+  $('replay').addEventListener('click', play);
+
+  // draw a box by dragging over the photo or the page
+  var drawing = false, start = null, rectEl = null, draft = null, host = null;
+  $('drawBtn').addEventListener('click', function () {
+    drawing = !drawing; this.setAttribute('aria-pressed', String(drawing));
+    host = st.stage === 'photo' ? $('stagePhoto') : $('stageText');
+    host.classList.toggle('drawing', drawing);
+    $('status').textContent = drawing ? 'Drag over the stage to choose what gets marked.' : boxText();
+  });
+  function pt(e) {
+    var el = target(), r = el.getBoundingClientRect(), k = st.stage === 'photo' ? el.naturalWidth / r.width : 1;
+    var W = st.stage === 'photo' ? el.naturalWidth : r.width, H = st.stage === 'photo' ? el.naturalHeight : r.height;
+    return [Math.max(0, Math.min(W, (e.clientX - r.left) * k)), Math.max(0, Math.min(H, (e.clientY - r.top) * k)), k];
+  }
+  ['stagePhoto', 'stageText'].forEach(function (id) {
+    var h = $(id);
+    h.addEventListener('pointerdown', function (e) {
+      if (!drawing) return;
+      start = pt(e); h.setPointerCapture(e.pointerId);
+      rectEl = document.createElement('div'); rectEl.className = 'drawbox'; h.appendChild(rectEl);
+    });
+    h.addEventListener('pointermove', function (e) {
+      if (!start) return;
+      var p = pt(e), k = p[2];
+      var x = Math.min(start[0], p[0]), y = Math.min(start[1], p[1]), w = Math.abs(p[0] - start[0]), hh = Math.abs(p[1] - start[1]);
+      rectEl.style.left = x / k + 'px'; rectEl.style.top = y / k + 'px'; rectEl.style.width = w / k + 'px'; rectEl.style.height = hh / k + 'px';
+      draft = [Math.round(x), Math.round(y), Math.round(w), Math.round(hh)];
+    });
+    h.addEventListener('pointerup', function () {
+      if (!start) return;
+      start = null; if (rectEl) rectEl.remove(); rectEl = null;
+      if (draft && draft[2] > 8 && draft[3] > 8) { if (st.stage === 'photo') st.box.photo = draft; else st.box.text = draft; }
+      draft = null; drawing = false; $('drawBtn').setAttribute('aria-pressed', 'false'); h.classList.remove('drawing');
+      $('status').textContent = boxText(); play();
+    });
+  });
+
+  // copy buttons
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = $(b.dataset.copy), txt = el.textContent;
+      var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1400); };
+      var fallback = function () { var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected'; };
+      try { navigator.clipboard.writeText(txt).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  // canvas text needs its fonts loaded first, so wait for them (briefly) before anything draws
+  var FAM = ['IM Fell English', 'IM Fell English SC', 'Homemade Apple', 'Caveat', 'Caveat Brush', 'Cormorant Garamond', 'Architects Daughter',
+    'Pinyon Script', 'Jost', 'Permanent Marker', 'Bungee', 'Rock Salt', 'UnifrakturMaguntia', 'Cinzel', 'Uncial Antiqua', 'Special Elite'];
+  var loads = document.fonts ? FAM.map(function (f) { return document.fonts.load('24px "' + f + '"').catch(function () {}); }) : [];
+  if (document.fonts) loads.push(document.fonts.load('italic 24px "IM Fell English"').catch(function () {}), document.fonts.load('italic 600 24px "Cormorant Garamond"').catch(function () {}));
+  var timeout = new Promise(function (r) { setTimeout(r, 2500); });
+  var keysP = fetch('media/demo/rock-pushin.keys.json').then(function (r) { return r.json(); }).then(function (k) { keys = k; }).catch(function () {});
+  Promise.race([Promise.all(loads.concat([keysP, document.fonts ? document.fonts.ready : null])), timeout]).then(function () {
+    A.styles.forEach(tile);
+    hero();
+    refresh();
+  });
+})();
+</script>
