@@ -1,9 +1,10 @@
 # Annotation FX
 
-[![Annotation FX: the same line from Darwin marked in four hands, drawn by the library itself](media/header.gif)](https://hntw.github.io/annotation-fx/)
+[![Annotation FX: the same line from Darwin marked in four hands (Darwin, Anning, Kahlo, Basquiat), drawn by the library itself](media/header.gif)](https://hntw.github.io/annotation-fx/)
 
-Circles, underlines, arrows and margin notes that draw themselves, in the hands of 31 people from science, art and
-history. Lyell lays highlights down as rock strata. Darwin's arrows branch into a tree. Dalí's circles melt.
+Circles, underlines, arrows and margin notes that draw themselves, in the hands of 51 people from science, art and
+history. Lyell lays highlights down as rock strata. Darwin's arrows branch into a tree. Anning's rings end in an
+ammonite. Basquiat crowns what matters. Dalí's circles melt.
 Point it at a word, a face in a photo or an object in running video, and render transparent overlays for video editors.
 One file, no dependencies, MIT.
 
@@ -18,12 +19,13 @@ Any mark takes a `note`, written beside it with a leader line on the side with t
 
 | field | styles |
 |---|---|
-| Science | lyell, darwin, davinci, hooke, newton, galileo, haeckel, cajal, feynman, nightingale, edison, leavitt |
-| Art | picasso, dali, vangogh, matisse, mondrian, kandinsky, pollock, hokusai, warhol, haring |
-| History | lascaux, scriptorium, champollion, bayeux, mercator, minard, bletchley, apollo, perkins (default) |
+| Science | alhaytham, davinci, galileo, hooke, newton, merian, banneker, anning, lyell, darwin, lovelace, nightingale, edison, cajal, curie, haeckel, leavitt, ramanujan, hopper, feynman, franklin, johnson |
+| Art | hokusai, vangogh, afklint, mondrian, kahlo, kandinsky, dali, lawrence, picasso, pollock, matisse, warhol, kusama, basquiat, haring, ringgold |
+| History | lascaux, bayeux, hildegard, scriptorium, aljazari, maya, mercator, seals, champollion, minard, perkins (default), bletchley, apollo |
 
 The styles are homages drawn from each figure's known habits, not reproductions of their work.
-`AnnotationFX.styles` lists each with its name, year and a one-line description.
+`AnnotationFX.styles` lists each with its name, year, a one-line description of the style and `bio`, a short profile of
+the person (or the people) behind it. The demo shows each profile under its card.
 
 ## Use it
 

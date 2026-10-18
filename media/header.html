@@ -1,7 +1,7 @@
 <!doctype html><meta charset="utf-8">
 <!-- The README header and demo loop, drawn by annotationfx.js itself. window.render(t) paints frame t (seconds) of the
      loop; ?t= paints that frame on load (no ?t: a showcase still). ?z= pixel ratio. Render: node media/anim.mjs -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:wght@400&family=Figtree:wght@400;500&family=JetBrains+Mono:wght@500&family=Homemade+Apple&family=Caveat:wght@600&family=Caveat+Brush&family=Pinyon+Script&family=Special+Elite&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:wght@400&family=Figtree:wght@400;500&family=JetBrains+Mono:wght@500&family=Homemade+Apple&family=Caveat:wght@600&family=Caveat+Brush&family=Pinyon+Script&family=Special+Elite&family=La+Belle+Aurore&family=Permanent+Marker&display=swap">
 <body style="margin:0;background:#e9ebe6">
 <canvas id="c"></canvas>
 <script src="../annotationfx.js"></script>
@@ -36,9 +36,9 @@ const box = (i, j = i) => { const a = words[i], b = words[j]; return [a.x - 2, a
 const S = 4, IN = 0.15, FADE = 0.3;
 const SHOTS = [
   { style: 'darwin', note: 'I think' },
-  { style: 'dali', note: 'soft forms' },
-  { style: 'picasso', note: 'forms!' },
-  { style: 'bletchley', note: 'decrypt by 0900' }
+  { style: 'anning', note: 'I found it' },
+  { style: 'kahlo', note: 'viva la vida' },
+  { style: 'basquiat', note: 'crown it' }
 ];
 const LOOP = S * SHOTS.length;
 const byId = {}; AnnotationFX.styles.forEach(s => byId[s.id] = s);
@@ -60,9 +60,9 @@ function render(t) {
   x.fillText('Annotation FX', 60, 272);
   AnnotationFX.draw(x, 20, W, H, { style: 'perkins', mark: 'circle', box: [60 + aw - 4, 216, fw + 8, 66], seed: 3 });
   x.fillStyle = MUTED; x.font = `400 21px ${SANS}`;
-  ['Circles, underlines, arrows and notes that', 'draw themselves, in 31 hands from science,', 'art and history.'].forEach((l, i) => x.fillText(l, 64, 360 + i * 31));
+  ['Circles, underlines, arrows and notes that', 'draw themselves, in 51 hands from science,', 'art and history.'].forEach((l, i) => x.fillText(l, 64, 360 + i * 31));
   x.fillStyle = INK; x.font = `500 14px ${MONO}`;
-  x.fillText('31 styles   10 marks   1 file', 64, 488);
+  x.fillText('51 styles   10 marks   1 file', 64, 488);
 
   // the page with this shot's marks
   x.save();
@@ -89,7 +89,7 @@ function render(t) {
 
 window.LOOP = LOOP; window.render = render;
 window.ready = Promise.all([`400 68px ${DISPLAY}`, `400 ${FS}px ${SERIF}`, `400 21px ${SANS}`, `500 14px ${MONO}`,
-  "24px 'Homemade Apple'", "600 30px Caveat", "32px 'Caveat Brush'", "34px 'Pinyon Script'", "21px 'Special Elite'"]
+  "24px 'Homemade Apple'", "600 30px Caveat", "32px 'Caveat Brush'", "34px 'Pinyon Script'", "21px 'Special Elite'", "25px 'La Belle Aurore'", "25px 'Permanent Marker'"]
   .map(f => document.fonts.load(f)))
   .then(() => { layout(); render(q.has('t') ? +q.get('t') : 3.4); document.title = 'ready'; });
 </script>

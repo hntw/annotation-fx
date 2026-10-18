@@ -5,7 +5,7 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  var VERSION = '1.1.0';
+  var VERSION = '1.2.0';
   var PI = Math.PI, TAU = PI * 2;
   var hasDOM = typeof window !== 'undefined' && typeof document !== 'undefined';
 
@@ -269,6 +269,22 @@
       c.strokeStyle = S.c2 || '#19c3e6'; c.save(); c.translate(2.6 * s, -2.2 * s); path(c, q); c.stroke(); c.restore();
       c.strokeStyle = S.c1 || '#ff3d9a'; c.save(); c.translate(-2.2 * s, 1.8 * s); path(c, q); c.stroke(); c.restore();
       c.strokeStyle = S.col; c.lineWidth = S.w * 0.5; path(c, q); c.stroke();
+    },
+    // ink with a soft glow that keeps pulsing after the line is down (radium)
+    glow: function (c, S, L, s, post) {
+      c.save(); c.shadowColor = S.glow || 'rgba(60,225,185,1)'; c.shadowBlur = (11 + 6 * Math.sin((post || 0) * 2.4)) * s;
+      PENS.ink(c, S, L, s); c.restore(); PENS.ink(c, S, L, s);
+    },
+    // round dots of uneven size laid along the path
+    polka: function (c, S, L, s) {
+      var r = rng(S.seed), w = S.w, step = w * 1.9;
+      c.fillStyle = S.col;
+      for (var d = 0; d <= S.len; d += step) { var z = w * (0.32 + 0.3 * r()); if (d > L) break; var p = at(S.pts, S.c, d); dot(c, p[0], p[1], z); }
+    },
+    // a running stitch: even dashes with gaps
+    running: function (c, S, L, s) {
+      var q = cutTo(S.pts, S.c, L);
+      c.strokeStyle = S.col; c.lineCap = 'round'; c.lineWidth = S.w * 0.6; c.setLineDash([S.w * 2.2, S.w * 1.5]); path(c, q); c.stroke();
     },
     rule: function (c, S, L) {
       var q = cutTo(S.pts, S.c, L);
@@ -1202,7 +1218,7 @@
 
   def('champollion', {
     name: 'Champollion', who: 'Jean-François Champollion', field: 'history', year: 1822,
-    about: 'Decipherment notes: names ringed in a cartouche with its end bar, in black and red ochre.',
+    about: 'Decipherment notes: names ringed in the Egyptian scribes’ cartouche, with its end bar, in black and red ochre.',
     pen: 'ink', w: 2.8, ink: '#1a1a1a', accent: '#a63a1f', font: { f: "'Cinzel', 'Trajan Pro', serif", wt: 600 }, size: 20, caps: true, hand: { wob: 0.35, over: 0.1, bend: 0.18 },
     marks: {
       circle: function (B) { cartouche(B); },
@@ -1219,7 +1235,7 @@
 
   def('bayeux', {
     name: 'Bayeux', who: 'Bayeux Tapestry embroiderers', field: 'history', year: 1070,
-    about: 'Wool on linen: laid-and-couched stitches in terracotta, sage and blue, stitched one by one.',
+    about: 'Wool on linen, most likely stitched by English women: laid-and-couched stitches in terracotta, sage and blue.',
     pen: 'stitch', w: 6, ink: '#a0462d', accent: '#5f7f4f', font: { f: "'Uncial Antiqua', serif" }, size: 22, caps: true, hand: { wob: 0.6, over: 0.3, bend: 0.2 },
     paper: '#ece2c9', textCol: '#2f4a73', hl: 'rgba(95,127,79,0.35)',
     after: function (B) { var it = B.items; for (var i = 0; i < it.length; i++) if (it[i].k === 's' && i % 2 === 1 && it[i].pen === 'stitch') it[i].col = B.K.accent; }
@@ -1284,7 +1300,7 @@
 
   def('bletchley', {
     name: 'Bletchley', who: 'Bletchley Park', field: 'history', year: 1942,
-    about: 'Typed intercepts: typewriter x-outs and underscores, redaction bars, and a red MOST SECRET stamp.',
+    about: 'Typed intercepts from a staff that was mostly women: typewriter x-outs and underscores, redaction bars, and a red MOST SECRET stamp.',
     pen: 'typed', w: 16, ink: '#222222', accent: '#b22222', font: { f: "'Special Elite', 'Courier New', monospace" }, size: 21, reveal: 'type', geo: true,
     hand: { wob: 0, over: 0, bend: 0 }, head: 'none',
     shaft: function (B, tail, tip) { B.shaftOpt = { glyph: '-', font: "'Special Elite', monospace" }; return lineP(tail, tip); },
@@ -1338,6 +1354,669 @@
       }
     }
   });
+
+  // ---- v1.2: twenty more hands (science, art, history)
+  function rrectP(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    return [].concat(lineP([x + r, y], [x + w - r, y]), ellipseP(x + w - r, y + r, r, r, -PI / 2, PI / 2, 0, 8),
+      lineP([x + w, y + r], [x + w, y + h - r]), ellipseP(x + w - r, y + h - r, r, r, 0, PI / 2, 0, 8),
+      lineP([x + w - r, y + h], [x + r, y + h]), ellipseP(x + r, y + h - r, r, r, PI / 2, PI / 2, 0, 8),
+      lineP([x, y + h - r], [x, y + r]), ellipseP(x + r, y + r, r, r, PI, PI / 2, 0, 8));
+  }
+  // a small text item drawn in its own window (ph 'note' or 'deco')
+  function tag(B, txt, x, y, px, o) {
+    o = o || {};
+    B.fn(function (c, u) {
+      c.globalAlpha *= u; c.fillStyle = o.col || B.K.ink; c.font = fontStr(o.F || B.F, px * B.s);
+      c.textAlign = o.align || 'center'; c.textBaseline = 'middle'; c.fillText(txt, x, y);
+    }, o.ph ? { ph: o.ph, at: o.at } : { len: 10 * B.s });
+  }
+  // the note's background box, as renderText draws it
+  function noteBox(B, A, pad) {
+    var s = B.s, R = A.R, p = pad || 0;
+    return { x: R.x - 6 * s - p, y: R.y - 4 * s - p, w: R.w + 12 * s + 2 * p, h: A.lines.length * A.lh + 6 * s + 2 * p };
+  }
+  // put an item just before the note text, so it draws under it
+  function underText(B, it) {
+    var items = B.items, i = items.indexOf(it), j;
+    if (i < 0) return;
+    items.splice(i, 1);
+    for (j = items.length - 1; j >= 0; j--) if (items[j].k === 't') break;
+    items.splice(j < 0 ? items.length : j, 0, it);
+  }
+  // somewhere beside the note that stays on the canvas
+  function besideNote(B, A, z) {
+    var s = B.s, R = A.R, x = A.side === 'left' ? R.x - z - 8 * s : R.x + R.w + z + 8 * s, y = R.y + R.h / 2;
+    if (x - z < 0 || x + z > B.W) { x = R.x + R.w / 2; y = R.y + R.h + z + 8 * s; if (y + z > B.H) y = R.y - z - 8 * s; }
+    return [x, y];
+  }
+  function ammonite(B, cx, cy, R, a0) {
+    var s = B.s, turns = 2.4;
+    B.stroke(ellipseP(cx, cy, R, R, a0, -TAU * turns, 0, 60, function (a, u) { return 1 - 0.9 * u; }), { w: 1.6 });
+    B.fn(function (c, u) {
+      c.strokeStyle = B.K.ink; c.lineWidth = 0.9 * s; var n = 14, shown = Math.floor(n * u);
+      for (var i = 0; i < shown; i++) {
+        var uu = i / n / turns, a = a0 - TAU * turns * uu, k0 = 1 - 0.9 * uu, k1 = 1 - 0.9 * (uu + 1 / turns);
+        c.beginPath(); c.moveTo(cx + Math.cos(a) * R * k0, cy + Math.sin(a) * R * k0); c.lineTo(cx + Math.cos(a) * R * k1, cy + Math.sin(a) * R * k1); c.stroke();
+      }
+    }, { len: R * 2 });
+  }
+
+  def('anning', {
+    name: 'Anning', who: 'Mary Anning', field: 'science', year: 1823,
+    about: 'Fossil hunting at Lyme Regis: rings that end in a ribbed ammonite, highlights dotted out like an imprint, notes on a specimen label.',
+    pen: 'ink', w: 2.2, ink: '#2b2a26', accent: '#8a6d3b', paper: '#d9dbd4', font: { f: "'La Belle Aurore', cursive" }, size: 25, leading: 1.45,
+    hand: { wob: 0.7, over: 0.25, bend: 0.2 }, hl: 'rgba(138,109,59,0.22)', noteBg: '#f1ece0',
+    marks: {
+      circle: function (B) {
+        MARKS.circle(B);
+        var E = B.E, s = B.s, a = -PI * 0.3, R = Math.max(12 * s, Math.min(26 * s, E.ry * 0.45));
+        ammonite(B, E.cx + Math.cos(a) * (E.rx + R * 0.9), E.cy + Math.sin(a) * (E.ry + R * 0.9), R, a + PI);
+        B.edge = function (T) { return ellEdge(E, 5 * s, T); };
+      },
+      highlight: function (B) {
+        var b = B.b, s = B.s, x = b.x - 6 * s, y = b.y - 5 * s, w = b.w + 12 * s, h = b.h + 10 * s;
+        B.fill(rrectP(x, y, w, h, 12 * s), { col: B.K.hl, rev: 'fade', len: w * 0.3, comp: 'multiply' });
+        B.stroke(rrectP(x, y, w, h, 12 * s), { pen: 'dotted', w: 2.4 });
+        B.edge = function (T) { return rectEdge(b, 8 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, Q = noteBox(B, A), F = { f: "'La Belle Aurore', cursive" };
+      B.fn(function (c, u) {
+        c.globalAlpha *= u; c.strokeStyle = B.K.accent; c.lineWidth = 1.2 * s; c.strokeRect(Q.x, Q.y, Q.w, Q.h);
+        c.fillStyle = B.K.accent; c.font = fontStr(F, 12 * s); c.textAlign = 'right'; c.fillText('Lyme Regis', Q.x + Q.w - 3 * s, Q.y + Q.h + 13 * s);
+      }, { ph: 'note', at: [0, 0.3] });
+    }
+  });
+
+  def('lovelace', {
+    name: 'Lovelace', who: 'Ada Lovelace', field: 'science', year: 1843,
+    about: 'Her Notes on the Analytical Engine: a lettered footnote mark on what she rings, and a rule over each note.',
+    pen: 'nib', w: 1.9, ink: '#1e2a44', accent: '#6b4c8a', font: { f: "'Cormorant Garamond', Georgia, serif", i: true, wt: 600 }, size: 28,
+    hand: { wob: 0.4, over: 0.2, bend: 0.15 },
+    after: function (B) {
+      if (B.m.mark !== 'circle' && B.m.mark !== 'box') return;
+      var b = B.b, s = B.s, x = B.E ? B.E.cx + B.E.rx * 0.78 : b.x + b.w + 6 * s, y = B.E ? B.E.cy - B.E.ry * 0.82 : b.y - 4 * s;
+      tag(B, 'G', x + 6 * s, y - 4 * s, 17, { col: B.K.accent });
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R, y = R.y - 9 * s, w = Math.min(R.w, 110 * s);
+      B.stroke(lineP([R.x, y], [R.x + w, y]), { pen: 'rule', w: 1.4, col: B.K.accent, ph: 'note', at: [0, 0.25] });
+    }
+  });
+
+  function moth(c, x, y, z, col) {
+    c.fillStyle = col; c.strokeStyle = col; c.lineWidth = 0.08 * z;
+    [[-1, -0.35, 0.55, 0.34, -0.5], [1, -0.35, 0.55, 0.34, 0.5], [-1, 0.32, 0.4, 0.26, 0.6], [1, 0.32, 0.4, 0.26, -0.6]].forEach(function (q) {
+      c.save(); c.globalAlpha *= 0.55; c.beginPath(); c.ellipse(x + q[0] * z * 0.42, y + q[1] * z, q[2] * z, q[3] * z, q[4], 0, TAU); c.fill(); c.restore();
+    });
+    c.beginPath(); c.ellipse(x, y, 0.1 * z, 0.48 * z, 0, 0, TAU); c.fill();
+    c.beginPath(); c.moveTo(x, y - 0.45 * z); c.quadraticCurveTo(x - 0.15 * z, y - 0.8 * z, x - 0.35 * z, y - 0.85 * z);
+    c.moveTo(x, y - 0.45 * z); c.quadraticCurveTo(x + 0.15 * z, y - 0.8 * z, x + 0.35 * z, y - 0.85 * z); c.stroke();
+  }
+  def('hopper', {
+    name: 'Hopper', who: 'Grace Hopper', field: 'science', year: 1947,
+    about: 'The Mark II logbook: pencil entries with a time stamp, and a moth taped to the page as the first actual bug.',
+    pen: 'pencil', w: 2.6, ink: '#2b2b2b', accent: '#7a6a3a', font: { f: "'Reenie Beanie', cursive" }, size: 33, hand: { wob: 0.9, over: 0.5, bend: 0.15 },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R, z = 22 * s, P = besideNote(B, A, z);
+      tag(B, '1545', R.x, R.y - 9 * s, 20, { align: 'left', ph: 'note', at: [0, 0.2] });
+      B.fn(function (c, u) {
+        c.save(); c.globalAlpha *= u; c.translate(P[0], P[1]); c.rotate(0.25);
+        moth(c, 0, 0, z, '#5b4a32');
+        c.rotate(-0.45); c.fillStyle = 'rgba(232,222,186,0.62)'; c.fillRect(-z * 1.1, -z * 0.3, z * 2.2, z * 0.6);
+        c.restore();
+      }, { ph: 'note', at: [0.8, 1.15] });
+    }
+  });
+
+  def('curie', {
+    name: 'Curie', who: 'Marie Curie', field: 'science', year: 1898,
+    about: 'Lab notebooks from the radium years: a careful hand, and every line keeps a faint blue-green glow.',
+    pen: 'glow', w: 2.1, ink: '#26313f', accent: '#2f8f7f', font: { f: "'Nothing You Could Do', cursive" }, size: 24, leading: 1.4,
+    hand: { wob: 0.6, over: 0.3, bend: 0.15 }, hl: 'rgba(110,235,205,0.3)',
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R;
+      tag(B, 'Ra', R.x + R.w + 14 * s, R.y + 6 * s, 15, { col: B.K.accent, F: { f: SERIF_FELL, i: true }, ph: 'note', at: [0.7, 1] });
+    }
+  });
+
+  def('merian', {
+    name: 'Merian', who: 'Maria Sibylla Merian', field: 'science', year: 1705,
+    about: 'Metamorphosis of the insects of Surinam: watercolor washes, and arrows that pass from egg to caterpillar to chrysalis to wing.',
+    pen: 'ink', w: 1.8, ink: '#3b4a2a', accent: '#7aa35a', font: { f: SERIF_FELL, i: true }, size: 26, hand: { wob: 0.6, over: 0.3, bend: 0.28 },
+    hl: 'rgba(122,163,90,0.3)', third: '#d98b4a',
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), f = wave(B.r);
+        B.fill(ellipseP(E.cx, E.cy, E.rx, E.ry, 0, TAU, 0, 64, function (a) { return 1 + 0.06 * f(a * 2); }), { col: 'rgba(122,163,90,0.18)', rev: 'fade', len: E.rx, comp: 'multiply' });
+        MARKS.circle(B);
+      }
+    },
+    noteDeco: function (B, A) {
+      var s = B.s;
+      if (A.shaft && A.shaft.pts && A.shaft.pts.length > 4) {
+        var p = A.shaft.pts, cl = cum(p), L = cl[cl.length - 1];
+        var g = function (u) { var q = at(p, cl, L * u); return [q[0] - Math.sin(q[2]) * 11 * s, q[1] + Math.cos(q[2]) * 11 * s, q[2]]; };
+        var egg = g(0.78), lar = g(0.52), pup = g(0.27);
+        B.fn(function (c, u) {
+          c.strokeStyle = B.K.ink; c.lineWidth = 0.9 * s;
+          if (u > 0) { c.fillStyle = '#efe6c8'; c.beginPath(); c.ellipse(egg[0], egg[1], 3 * s, 4 * s, egg[2], 0, TAU); c.fill(); c.stroke(); }
+          if (u > 0.33) { c.fillStyle = B.K.accent; for (var i = 0; i < 5; i++) dot(c, lar[0] + Math.cos(lar[2]) * (i - 2) * 4.2 * s, lar[1] + Math.sin(lar[2]) * (i - 2) * 4.2 * s, (i === 4 ? 3 : 2.6) * s); }
+          if (u > 0.66) { c.fillStyle = '#b59a5a'; c.beginPath(); c.ellipse(pup[0], pup[1], 8 * s, 3.6 * s, pup[2], 0, TAU); c.fill(); c.stroke(); }
+        }, { len: 30 * s });
+      }
+      if (!A.R) return;
+      var z = 13 * s, P = besideNote(B, A, z);
+      B.fn(function (c, u) {
+        c.save(); c.translate(P[0], P[1]); c.scale(outBack(u), outBack(u)); c.strokeStyle = B.K.ink; c.lineWidth = 0.9 * s;
+        [[-1, -1, B.st.third], [1, -1, B.st.third], [-1, 1, B.K.accent], [1, 1, B.K.accent]].forEach(function (q) {
+          c.fillStyle = q[2]; c.beginPath(); c.ellipse(q[0] * z * 0.55, q[1] * z * (q[1] < 0 ? 0.42 : 0.38), z * (q[1] < 0 ? 0.6 : 0.42), z * 0.36, q[0] * q[1] * 0.6, 0, TAU); c.fill(); c.stroke();
+        });
+        c.fillStyle = B.K.ink; c.beginPath(); c.ellipse(0, 0, 1.6 * s, z * 0.55, 0, 0, TAU); c.fill();
+        c.restore();
+      }, { ph: 'note', at: [0.7, 1.1] });
+    }
+  });
+
+  def('franklin', {
+    name: 'Franklin', who: 'Rosalind Franklin', field: 'science', year: 1952,
+    about: 'Photo 51 on X-ray film: highlights come out as the X of a helix, notes get a measured scale bar.',
+    pen: 'pencil', w: 2.2, ink: '#ece8dc', accent: '#a9c4d9', ground: 'dark', paper: '#24272c', font: { f: "'Patrick Hand', cursive" }, size: 27,
+    hand: { wob: 0.4, over: 0.2, bend: 0.12 }, hl: 'rgba(169,196,217,0.3)',
+    marks: {
+      highlight: function (B) {
+        var b = B.b, s = B.s, cx = b.x + b.w / 2, cy = b.y + b.h / 2, hh = b.h / 2 + 6 * s, hw = Math.min(b.w / 2 + 6 * s, hh * 1.6), n = 9;
+        B.fn(function (c, u) {
+          c.save(); c.globalCompositeOperation = 'screen'; c.fillStyle = 'rgba(214,226,236,0.5)';
+          var shown = Math.ceil(n * u);
+          for (var i = 0; i < shown; i++) {
+            var v = (i / (n - 1)) * 2 - 1, y = cy + v * hh, x = Math.abs(v) * hw, l = (5 + 4 * (1 - Math.abs(v))) * s;
+            if (i === (n - 1) / 2) { c.fillRect(cx - l, y - 1.4 * s, 2 * l, 2.8 * s); continue; }
+            c.fillRect(cx - x - l, y - 1.4 * s, 2 * l, 2.8 * s); c.fillRect(cx + x - l, y - 1.4 * s, 2 * l, 2.8 * s);
+          }
+          c.restore();
+        }, { len: b.w });
+        B.edge = function (T) { return rectEdge(b, 8 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R, x0 = R.x, y = R.y + R.h + 9 * s, w = Math.min(R.w, 70 * s);
+      B.fn(function (c, u) {
+        c.strokeStyle = B.K.accent; c.lineWidth = 1.1 * s; c.beginPath(); c.moveTo(x0, y); c.lineTo(x0 + w * u, y);
+        for (var k = 0; k <= 4; k++) if (k / 4 <= u) { c.moveTo(x0 + w * k / 4, y - (k % 4 ? 3 : 5) * s); c.lineTo(x0 + w * k / 4, y + (k % 4 ? 3 : 5) * s); }
+        c.stroke();
+        if (u >= 1) { c.fillStyle = B.K.accent; c.font = fontStr(B.F, 14 * s); c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText('3.4 Å', x0 + w + 6 * s, y); }
+      }, { ph: 'note', at: [0.5, 1] });
+    }
+  });
+
+  function check(B, x, y, z, o) {
+    var s = B.s;
+    B.stroke(B.hand([[x - z * 0.5, y - z * 0.05], [x - z * 0.15, y + z * 0.35], [x + z * 0.6, y - z * 0.55]], 0.1), o || { w: 2.2 });
+  }
+  def('johnson', {
+    name: 'Johnson', who: 'Katherine Johnson', field: 'science', year: 1962,
+    about: 'Hand-checked orbits: circles drawn as a tilted orbit with a capsule riding it, and a check mark once the numbers hold.',
+    pen: 'pencil', w: 2.3, ink: '#22311f', accent: '#2f6a4a', paper: '#f2f5ee', font: { f: "'Patrick Hand', cursive" }, size: 28, hand: { wob: 0.5, over: 0.3, bend: 0.18 },
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), s = B.s, tilt = -0.12; B.E = E;
+        var rx = E.rx * 1.05, ry = E.ry * 1.05;
+        B.stroke(ellipseP(E.cx, E.cy, rx, ry, -PI * 0.2, -TAU * 1.04, tilt));
+        B.fn(function (c, u, post) {
+          if (post === undefined) return;
+          var a = -PI * 0.2 - post * 0.9, x = Math.cos(a) * rx, y = Math.sin(a) * ry;
+          c.fillStyle = B.K.accent; dot(c, E.cx + x * Math.cos(tilt) - y * Math.sin(tilt), E.cy + x * Math.sin(tilt) + y * Math.cos(tilt), 3.4 * s);
+        }, { ph: 'deco', at: [1, 1.05] });
+        check(B, E.cx + rx * 0.92, E.cy - ry * 0.95, 16 * s);
+        B.edge = function (T) { return ellEdge({ cx: E.cx, cy: E.cy, rx: rx, ry: ry }, 5 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R, x = R.x + R.w + 16 * s;
+      if (x + 12 * s > B.W) x = R.x - 16 * s;
+      B.stroke(B.hand([[x - 8 * s, R.y + 10 * s], [x - 2 * s, R.y + 17 * s], [x + 10 * s, R.y + 2 * s]], 0.1), { w: 2.4, col: B.K.accent, ph: 'note', at: [0.85, 1.1] });
+    }
+  });
+
+  def('ramanujan', {
+    name: 'Ramanujan', who: 'Srinivasa Ramanujan', field: 'science', year: 1913,
+    about: 'The notebooks: results stated without proof, each with its entry number, boxes ruled twice, a sigma riding the underline.',
+    pen: 'ink', w: 2, ink: '#1f3355', accent: '#2f6f5f', font: { f: "'Kalam', cursive" }, size: 25, hand: { wob: 0.5, over: 0.3, bend: 0.15 },
+    marks: {
+      box: function (B) {
+        MARKS.box(B);
+        var b = B.b, s = B.s, p = 12 * s;
+        B.stroke(B.hand(rectP(b.x - p, b.y - p, b.w + 2 * p, b.h + 2 * p), 0.3), { w: 1.3 });
+        B.edge = function (T) { return rectEdge(b, p + 5 * s, T); };
+      },
+      underline: function (B) {
+        MARKS.underline(B);
+        var b = B.b, s = B.s;
+        tag(B, '∑', b.x - 14 * s, b.y + b.h + 4 * s, 26, { F: { f: SERIF_FELL } });
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R, x = R.x - 8 * s;
+      if (x - 30 * s < 0) x = R.x + R.w + 36 * s;
+      tag(B, '(7)', x, R.y + A.lh * 0.5, 17, { align: 'right', col: B.K.accent, ph: 'note', at: [0, 0.2] });
+    }
+  });
+
+  def('alhaytham', {
+    name: 'Ibn al-Haytham', who: 'Ibn al-Haytham', field: 'science', year: 1021,
+    about: 'Book of Optics: compass circles, straight rays that fan from the eye to the edges, every point lettered alif, ba, jim, dal.',
+    pen: 'nib', w: 1.7, ink: '#2a1d12', accent: '#a3342a', font: { f: "'Amiri', Georgia, serif" }, size: 27, geo: true, hand: { wob: 0.15, over: 0, bend: 0 },
+    head: 'tri', headCol: '#a3342a', headSize: 11,
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), s = B.s; B.E = E;
+        B.stroke(ellipseP(E.cx, E.cy, E.rx, E.ry, -PI / 2, -TAU, 0));
+        B.fn(function (c, u) { c.fillStyle = B.K.accent; dot(c, E.cx, E.cy - E.ry, 2.4 * s * u); }, { len: 6 * s });
+        B.edge = function (T) { return ellEdge(E, 5 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.tail) return;
+      var s = B.s, b = B.b, t = A.tail, F = { f: "'Amiri', serif" };
+      var corners = [[b.x, b.y], [b.x + b.w, b.y + b.h]];
+      if (Math.abs(A.D[1]) > 0) corners = [[b.x, b.y + (A.D[1] > 0 ? b.h : 0)], [b.x + b.w, b.y + (A.D[1] > 0 ? b.h : 0)]];
+      else corners = [[b.x + (A.D[0] > 0 ? b.w : 0), b.y], [b.x + (A.D[0] > 0 ? b.w : 0), b.y + b.h]];
+      corners.forEach(function (q) { B.stroke(lineP(t, q), { pen: 'rule', w: 1, col: alpha(B.K.ink, 0.6) }); });
+      tag(B, 'ا', t[0] - A.D[0] * 12 * s, t[1] - A.D[1] * 12 * s - (A.D[1] ? 0 : 10 * s), 18, { F: F, col: B.K.accent });
+      tag(B, 'ج', corners[0][0] - 9 * s, corners[0][1] - 8 * s, 17, { F: F, col: B.K.accent });
+      tag(B, 'د', corners[1][0] + 9 * s, corners[1][1] + 10 * s, 17, { F: F, col: B.K.accent });
+      tag(B, 'ب', A.tip[0] + A.D[0] * 10 * s + (A.D[1] ? 12 * s : 0), A.tip[1] + A.D[1] * 10 * s - (A.D[1] ? 0 : 10 * s), 17, { F: F, col: B.K.accent });
+    }
+  });
+
+  function star(c, x, y, r) {
+    c.beginPath();
+    for (var i = 0; i < 10; i++) { var a = -PI / 2 + i * PI / 5, k = i % 2 ? 0.42 : 1; c.lineTo(x + Math.cos(a) * r * k, y + Math.sin(a) * r * k); }
+    c.closePath(); c.fill();
+  }
+  def('banneker', {
+    name: 'Banneker', who: 'Benjamin Banneker', field: 'science', year: 1792,
+    about: 'Almanac astronomy: rings set with stars like a sky chart, doubled rules, and a crescent moon beside each note.',
+    pen: 'nib', w: 2, ink: '#2a2418', accent: '#7a5a1a', font: { f: SERIF_FELL, i: true }, size: 26, double: true, hand: { wob: 0.4, over: 0.25, bend: 0.2 },
+    hl: 'rgba(122,90,26,0.2)',
+    marks: {
+      circle: function (B) {
+        MARKS.circle(B);
+        var E = B.E, s = B.s, pts = [-0.6, 0.9, 2.2, 3.6];
+        B.fn(function (c, u) {
+          c.fillStyle = B.K.accent;
+          pts.forEach(function (a, i) { if (i / pts.length < u) star(c, E.cx + Math.cos(a) * E.rx, E.cy + Math.sin(a) * E.ry, (i % 2 ? 4 : 6) * s); });
+        }, { ph: 'deco', at: [1, 1.3] });
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, z = 13 * s, P = besideNote(B, A, z);
+      B.fn(function (c, u) {
+        c.save(); c.globalAlpha *= u; c.fillStyle = B.K.accent;
+        c.beginPath(); c.arc(P[0], P[1], z, PI * 0.35, PI * 1.65); c.arc(P[0] + z * 0.45, P[1], z * 0.82, PI * 1.62, PI * 0.38, true); c.closePath(); c.fill();
+        star(c, P[0] + z * 1.1, P[1] - z * 0.9, 3 * s); star(c, P[0] + z * 1.6, P[1] + z * 0.2, 2.2 * s);
+        c.restore();
+      }, { ph: 'note', at: [0.6, 1] });
+    }
+  });
+
+  // ---- v1.2 art
+  def('afklint', {
+    name: 'af Klint', who: 'Hilma af Klint', field: 'art', year: 1907,
+    about: 'Paintings for the Temple: two overlapping rings in blue and yellow, pastel washes, and a snail spiral where each arrow starts.',
+    pen: 'ink', w: 2.4, ink: '#3a3361', accent: '#e8a4b8', paper: '#f0e6d2', font: { f: "'Cormorant Garamond', Georgia, serif", i: true, wt: 600 }, size: 28,
+    hand: { wob: 0.3, over: 0.1, bend: 0.3 }, third: '#f2c76b', hl: 'rgba(232,164,184,0.45)',
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), s = B.s, d = Math.min(E.rx * 0.18, 30 * s); B.E = E;
+        B.fill(ellipseP(E.cx - d, E.cy, E.rx, E.ry, 0, TAU, 0, 60), { col: 'rgba(110,150,210,0.22)', rev: 'grow', cx: E.cx - d, cy: E.cy, len: E.rx, comp: 'multiply' });
+        B.fill(ellipseP(E.cx + d, E.cy, E.rx, E.ry, 0, TAU, 0, 60), { col: 'rgba(242,199,107,0.3)', rev: 'grow', cx: E.cx + d, cy: E.cy, len: E.rx, comp: 'multiply' });
+        B.stroke(ellipseP(E.cx - d, E.cy, E.rx, E.ry, -PI / 2, -TAU, 0), { w: 1.8, col: '#4a6fb0' });
+        B.stroke(ellipseP(E.cx + d, E.cy, E.rx, E.ry, -PI / 2, TAU, 0), { w: 1.8, col: '#c9932a' });
+        B.edge = function (T) { return ellEdge({ cx: E.cx, cy: E.cy, rx: E.rx + d, ry: E.ry }, 5 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = 13 * s, P = besideNote(B, A, R), cx = P[0], cy = P[1];
+      B.stroke(ellipseP(cx, cy, R, R, -PI / 2, TAU * 2.2, 0, 70, function (a, u) { return 1 - 0.92 * u; }), { w: 1.6, col: B.K.ink });
+    }
+  });
+
+  def('kusama', {
+    name: 'Kusama', who: 'Yayoi Kusama', field: 'art', year: 1965,
+    about: 'Infinity nets: every line is made of dots, and more dots keep spreading around whatever she marks.',
+    pen: 'polka', w: 7, ink: '#141414', accent: '#d7261e', paper: '#f6d31f', font: { f: "'Jost', 'Futura', sans-serif", wt: 700 }, size: 23, caps: true,
+    hand: { wob: 0.6, over: 0.3, bend: 0.25 },
+    marks: {
+      highlight: function (B) {
+        var b = B.b, s = B.s, r = B.r, x = b.x - 5 * s, y = b.y - 4 * s, w = b.w + 10 * s, h = b.h + 8 * s, g = 9 * s, P = [];
+        for (var yy = y + g / 2, row = 0; yy < y + h; yy += g, row++) for (var xx = x + g / 2 + (row % 2) * g / 2; xx < x + w; xx += g) P.push([xx, yy, g * (0.18 + 0.2 * r())]);
+        B.fn(function (c, u) { c.fillStyle = B.K.accent; c.globalAlpha *= 0.85; P.forEach(function (q) { if (q[0] < x + w * u) dot(c, q[0], q[1], q[2]); }); }, { len: w });
+        B.edge = function (T) { return rectEdge(b, 8 * s, T); };
+      }
+    },
+    after: function (B) {
+      var mk = B.m.mark; if (mk === 'connect' || mk === 'highlight') return;
+      var b = B.b, s = B.s, r = B.r, P = [], n = 14;
+      for (var i = 0; i < n; i++) {
+        var a = r() * TAU, d = 1.15 + r() * 0.3, rx = b.w / 2 + 14 * s, ry = b.h / 2 + 12 * s;
+        P.push([b.x + b.w / 2 + Math.cos(a) * rx * d, b.y + b.h / 2 + Math.sin(a) * ry * d, (1.2 + r() * 2.2) * s, r()]);
+      }
+      B.fn(function (c, u, post) {
+        var g = Math.min(1, u + (post || 0) * 0.25);
+        c.fillStyle = B.K.accent; P.forEach(function (q) { if (q[3] < g) dot(c, q[0], q[1], q[2] * outBack(clamp((g - q[3]) * 4, 0, 1))); });
+      }, { ph: 'deco', at: [1, 1.5] });
+    }
+  });
+
+  def('kahlo', {
+    name: 'Kahlo', who: 'Frida Kahlo', field: 'art', year: 1931,
+    about: 'Painted ribbons that carry the words, flowers crowning every circle, deep green leaf ink with red and marigold.',
+    pen: 'ink', w: 2.6, ink: '#2d5a3d', accent: '#c8323f', font: { f: "'Caveat Brush', cursive" }, size: 30, hand: { wob: 0.5, over: 0.3, bend: 0.25 },
+    third: '#f2a93b', hl: 'rgba(200,50,63,0.25)', textCol: '#2a2420',
+    marks: {
+      circle: function (B) {
+        MARKS.circle(B);
+        var E = B.E, s = B.s, at3 = [-PI / 2 - 0.55, -PI / 2, -PI / 2 + 0.55];
+        B.fn(function (c, u) {
+          at3.forEach(function (a, i) {
+            var g = outBack(clamp(u * 3 - i, 0, 1)); if (g <= 0) return;
+            var x = E.cx + Math.cos(a) * E.rx, y = E.cy + Math.sin(a) * E.ry, z = (i === 1 ? 9 : 7) * s * g;
+            c.fillStyle = i === 1 ? B.K.accent : B.st.third;
+            for (var k = 0; k < 5; k++) { var b2 = k * TAU / 5 - PI / 2; c.beginPath(); c.ellipse(x + Math.cos(b2) * z * 0.62, y + Math.sin(b2) * z * 0.62, z * 0.5, z * 0.32, b2, 0, TAU); c.fill(); }
+            c.fillStyle = '#5a3a1a'; dot(c, x, y, z * 0.28);
+          });
+        }, { ph: 'deco', at: [1, 1.4] });
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, Q = noteBox(B, A, 3 * s), f = 12 * s;
+      var poly = [[Q.x, Q.y], [Q.x + Q.w, Q.y], [Q.x + Q.w + f, Q.y - 3 * s], [Q.x + Q.w + f * 0.45, Q.y + Q.h / 2], [Q.x + Q.w + f, Q.y + Q.h + 3 * s],
+        [Q.x + Q.w, Q.y + Q.h], [Q.x, Q.y + Q.h], [Q.x - f, Q.y + Q.h + 3 * s], [Q.x - f * 0.45, Q.y + Q.h / 2], [Q.x - f, Q.y - 3 * s], [Q.x, Q.y]];
+      underText(B, B.fill(poly, { col: '#f6dccf', rev: 'wipe', dir: 'right', ph: 'note', at: [0, 0.3], stroke: B.K.accent, strokeW: 1.4 * s }));
+    }
+  });
+
+  function crown(B, x, y, z) {
+    var p = [[x, y], [x + z * 0.1, y - z * 0.7], [x + z * 0.32, y - z * 0.25], [x + z * 0.5, y - z * 0.85], [x + z * 0.68, y - z * 0.25], [x + z * 0.9, y - z * 0.7], [x + z, y], [x, y]];
+    B.stroke(B.hand(resample(p, 3 * B.s), 0.25), { w: 3.2, col: B.st.third });
+    B.fn(function (c, u) { c.fillStyle = B.st.third; [[0.1, -0.7], [0.5, -0.85], [0.9, -0.7]].forEach(function (q) { dot(c, x + q[0] * z, y + q[1] * z - 3 * B.s, 2.6 * B.s * u); }); }, { len: 8 * B.s });
+  }
+  def('basquiat', {
+    name: 'Basquiat', who: 'Jean-Michel Basquiat', field: 'art', year: 1982,
+    about: 'Oilstick on canvas: a three-point crown over what matters, words crossed out so you read them harder, a copyright mark on the note.',
+    pen: 'crayon', w: 5, ink: '#141414', accent: '#c8102e', font: { f: "'Permanent Marker', cursive" }, size: 25, caps: true,
+    hand: { wob: 1, over: 0.6, bend: 0.25 }, third: '#e8b21a', hl: 'rgba(232,178,26,0.45)',
+    marks: {
+      strike: function (B) {
+        var b = B.b, s = B.s;
+        [0.42, 0.62].forEach(function (k, i) { B.stroke(B.hand(lineP([b.x - 6 * s, b.y + b.h * k + (i ? 2 : -2) * s], [b.x + b.w + 6 * s, b.y + b.h * k + (i ? -3 : 2) * s]), 0.5)); });
+        B.edge = function (T) { return rectEdge(b, 6 * s, T); };
+      }
+    },
+    after: function (B) {
+      var mk = B.m.mark; if (mk !== 'circle' && mk !== 'box') return;
+      var b = B.b, s = B.s, z = Math.min(40 * s, Math.max(24 * s, b.h * 0.8)), top = B.E ? B.E.cy - B.E.ry : b.y - 6 * s;
+      crown(B, b.x + b.w * 0.5 - z / 2, top - 5 * s, z);
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, c = B.c, last = A.lines[A.lines.length - 1];
+      c.save(); c.font = fontStr(B.F, A.px); var w = c.measureText(last).width; c.restore();
+      var x = A.R.x + w + 14 * s, y = A.R.y + A.lh * (A.lines.length - 0.5);
+      tag(B, '©', x, y, 22, { col: B.K.accent, ph: 'note', at: [0.9, 1.1] });
+    }
+  });
+
+  def('ringgold', {
+    name: 'Ringgold', who: 'Faith Ringgold', field: 'art', year: 1988,
+    about: 'Story quilts: boxes and rings get a pieced border of bright squares, lines run in a stitch, notes sit on a strip of cloth.',
+    pen: 'running', w: 3, ink: '#2a2a5a', accent: '#d9643a', font: { f: "'Gochi Hand', cursive" }, size: 28, hand: { wob: 0.5, over: 0.3, bend: 0.2 },
+    noteBg: '#f6eedd', hl: 'rgba(217,100,58,0.3)', pal: ['#d9643a', '#2f7f6f', '#f2c14e', '#3a5a9a', '#b8336a'],
+    marks: {
+      box: function (B) { quilt(B); },
+      circle: function (B) { quilt(B); }
+    }
+  });
+  function quilt(B) {
+    var b = B.b, s = B.s, z = Math.max(6 * s, Math.min(12 * s, b.h * 0.24)), p = 4 * s, x0 = b.x - p - z, y0 = b.y - p - z, x1 = b.x + b.w + p, y1 = b.y + b.h + p;
+    var nx = Math.max(2, Math.round((x1 - x0) / z)), ny = Math.max(2, Math.round((y1 - y0) / z)), zx = (x1 - x0) / nx, zy = (y1 - y0) / ny, pal = B.st.pal, sq = [];
+    for (var i = 0; i < nx; i++) sq.push([x0 + i * zx, y0, zx, z]);
+    for (i = 0; i < ny; i++) sq.push([x1, y0 + i * zy, z, zy]);
+    for (i = nx; i > 0; i--) sq.push([x0 + i * zx, y1, zx, z]);
+    for (i = ny; i > 0; i--) sq.push([x0, y0 + i * zy, z, zy]);
+    var tot = sq.length;
+    B.fn(function (c, u) {
+      var shown = Math.floor(tot * u + 1e-6);
+      for (var j = 0; j < shown; j++) { var q = sq[j]; c.fillStyle = pal[j % pal.length]; c.fillRect(q[0] + 0.8 * s, q[1] + 0.8 * s, q[2] - 1.6 * s, q[3] - 1.6 * s); }
+    }, { len: (x1 - x0 + y1 - y0) * 1.2 });
+    B.stroke(rectP(x0 + z * 0.5, y0 + z * 0.5, x1 - x0, y1 - y0), { w: 1.6, col: B.K.ink, with: true });
+    B.edge = function (T) { return rectEdge(b, p + z + 4 * s, T); };
+  }
+
+  def('lawrence', {
+    name: 'Lawrence', who: 'Jacob Lawrence', field: 'art', year: 1941,
+    about: 'The Migration Series: flat angular shapes in ochre and black, and every note is a numbered caption.',
+    pen: 'cut', w: 5, ink: '#1a1a1a', accent: '#c8742b', font: { f: "'Jost', 'Futura', sans-serif", wt: 500 }, size: 22, hand: { wob: 0.5, over: 0.3, bend: 0.2 },
+    third: '#2e5c8a', hl: 'rgba(200,116,43,0.45)',
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), r = B.r, s = B.s, n = 6, pts = []; B.E = E;
+        for (var i = 0; i <= n; i++) { var a = -PI * 0.2 - i * TAU / n + (i % n ? (r() - 0.5) * 0.3 : 0), k = i % n ? 1.06 + (r() - 0.5) * 0.12 : 1.06; pts.push([E.cx + Math.cos(a) * E.rx * k, E.cy + Math.sin(a) * E.ry * k]); }
+        pts[n] = pts[0];
+        B.fill(pts, { col: alpha(B.K.accent, 0.4), rev: 'grow', cx: E.cx, cy: E.cy, len: E.rx, comp: 'multiply' });
+        B.stroke(resample(pts, 3 * s));
+        B.edge = function (T) { return ellEdge({ cx: E.cx, cy: E.cy, rx: E.rx * 1.12, ry: E.ry * 1.12 }, 4 * s, T); };
+      },
+      highlight: function (B) {
+        var b = B.b, s = B.s;
+        B.fill([[b.x - 8 * s, b.y + b.h * 0.1], [b.x + b.w + 4 * s, b.y - 4 * s], [b.x + b.w + 8 * s, b.y + b.h * 0.85], [b.x - 3 * s, b.y + b.h + 4 * s]], { col: B.K.hl, rev: 'wipe', dir: 'right', len: b.w, comp: 'multiply' });
+        B.edge = function (T) { return rectEdge(b, 8 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, R = A.R, x = R.x - 10 * s, y = R.y + A.lh * 0.5;
+      if (x - 20 * s < 0) { x = R.x; y = R.y - 12 * s; }
+      tag(B, '1.', x, y, 22, { align: x === R.x ? 'left' : 'right', F: { f: "'Jost', sans-serif", wt: 700 }, ph: 'note', at: [0, 0.15] });
+    }
+  });
+
+  // ---- v1.2 history
+  def('hildegard', {
+    name: 'Hildegard', who: 'Hildegard of Bingen', field: 'history', year: 1151,
+    about: 'Scivias visions: rings of gold laid over ink, red tongues of flame around them, gilded strokes under the words.',
+    pen: 'nib', w: 2.3, ink: '#2a1f3d', accent: '#c9a227', font: { f: "'Uncial Antiqua', serif" }, size: 22, hand: { wob: 0.4, over: 0.2, bend: 0.18 },
+    third: '#b3261e', hl: 'rgba(201,162,39,0.35)',
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), s = B.s, n = 16; B.E = E;
+        B.stroke(ellipseP(E.cx, E.cy, E.rx + 4 * s, E.ry + 4 * s, -PI / 2, -TAU, 0), { pen: 'marker', w: 6, col: B.K.accent });
+        B.stroke(ellipseP(E.cx, E.cy, E.rx, E.ry, -PI / 2, -TAU, 0), { w: 1.4, with: true });
+        B.stroke(ellipseP(E.cx, E.cy, E.rx + 8 * s, E.ry + 8 * s, -PI / 2, -TAU, 0), { w: 1.4, with: true });
+        B.fn(function (c, u, post) {
+          c.fillStyle = B.st.third; var shown = Math.floor(n * u), fl = 1 + 0.15 * Math.sin((post || 0) * 5);
+          for (var i = 0; i < shown; i++) {
+            var a = -PI / 2 + i * TAU / n, ca = Math.cos(a), sa = Math.sin(a), bx = E.cx + ca * (E.rx + 10 * s), by = E.cy + sa * (E.ry + 10 * s), l = (10 + 4 * (i % 2)) * s * (i % 2 ? fl : 2 - fl), w = 3.5 * s;
+            c.beginPath(); c.moveTo(bx - sa * w, by + ca * w); c.quadraticCurveTo(bx + ca * l * 0.6 + sa * w, by + sa * l * 0.6 - ca * w, bx + ca * l, by + sa * l); c.quadraticCurveTo(bx + ca * l * 0.4 - sa * w, by + sa * l * 0.4 + ca * w, bx + sa * w, by - ca * w); c.closePath(); c.fill();
+          }
+        }, { ph: 'deco', at: [1, 1.5] });
+        B.edge = function (T) { return ellEdge({ cx: E.cx, cy: E.cy, rx: E.rx + 22 * s, ry: E.ry + 22 * s }, 3 * s, T); };
+      },
+      underline: function (B) { MARKS.underline(B); var it = B.items[B.items.length - 1]; it.col = B.K.accent; it.pen = 'marker'; it.w = 4 * B.s; }
+    }
+  });
+
+  function gearP(cx, cy, rx, ry, n, depth, ph) {
+    var p = [], m = n * 4;
+    for (var i = 0; i <= m; i++) { var a = ph + i * TAU / m, k = (i % 4 === 1 || i % 4 === 2) ? 1 + depth : 1; p.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
+    return p;
+  }
+  def('aljazari', {
+    name: 'al-Jazari', who: 'Ismail al-Jazari', field: 'history', year: 1206,
+    about: 'The Book of Ingenious Devices: rings cut with gear teeth that keep turning, a small cog driving each arrow, water blue and red.',
+    pen: 'ink', w: 2.2, ink: '#2b1d10', accent: '#2f6f8f', paper: '#efe2c4', font: { f: "'Amiri', Georgia, serif" }, size: 27, hand: { wob: 0.25, over: 0.1, bend: 0.2 },
+    third: '#b0402a', hl: 'rgba(47,111,143,0.25)', head: 'tri', headCol: '#b0402a',
+    marks: {
+      circle: function (B) {
+        var E = B.ellipse(), s = B.s, n = Math.max(14, Math.round((E.rx + E.ry) / (9 * s))), dep = 7 * s / Math.max(E.rx, E.ry); B.E = E;
+        B.stroke(ellipseP(E.cx, E.cy, E.rx, E.ry, -PI / 2, -TAU, 0), { w: 1.4 });
+        B.fn(function (c, u, post) {
+          var p = gearP(E.cx, E.cy, E.rx, E.ry, n, dep, -PI / 2 + (post || 0) * 0.18), m = Math.floor((p.length - 1) * u);
+          c.strokeStyle = B.K.ink; c.lineWidth = 1.8 * s; c.lineJoin = 'round'; c.beginPath(); c.moveTo(p[0][0], p[0][1]);
+          for (var i = 1; i <= m; i++) c.lineTo(p[i][0], p[i][1]);
+          c.stroke();
+        }, { len: E.rx * 3 });
+        B.edge = function (T) { return ellEdge({ cx: E.cx, cy: E.cy, rx: E.rx * (1 + dep), ry: E.ry * (1 + dep) }, 5 * s, T); };
+      }
+    },
+    noteDeco: function (B, A) {
+      if (!A.tail) return;
+      var s = B.s, t = A.tail, R = 10 * s, a = A.shaft ? A.shaft.ang : 0, cx = t[0] - Math.sin(a) * R * 1.7 + Math.cos(a) * R * 0.6, cy = t[1] + Math.cos(a) * R * 1.7 + Math.sin(a) * R * 0.6;
+      B.fn(function (c, u, post) {
+        var g = outBack(u), p = gearP(cx, cy, R * g, R * g, 8, 0.32, -(post || 0) * 0.9);
+        c.strokeStyle = B.st.third; c.fillStyle = alpha(B.st.third, 0.15); c.lineWidth = 1.5 * s; path(c, p); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = B.st.third; dot(c, cx, cy, 2 * s * g);
+      }, { len: 20 * s });
+    }
+  });
+
+  function seal(B, x, y, w, h, at, rot) {
+    var s = B.s, r = rng(B.m.seed * 5 + Math.round(x)), L = [];
+    for (var i = 0; i < 5; i++) L.push([r(), r(), r() < 0.5]);
+    B.fn(function (c, u) {
+      if (u <= 0) return;
+      var k = 1 + 0.35 * (1 - outCubic(u));
+      c.save(); c.translate(x, y); c.rotate(rot || 0); c.scale(k, k); c.globalAlpha *= 0.88 * Math.min(1, u * 2);
+      c.strokeStyle = B.K.accent; c.fillStyle = B.K.accent; c.lineWidth = 2.4 * s; c.strokeRect(-w / 2, -h / 2, w, h);
+      c.lineWidth = 2 * s; c.lineCap = 'square';
+      for (var i = 0; i < L.length; i++) {
+        var q = L[i], col = i < 3 ? -w * 0.22 : w * 0.22, yy = -h / 2 + h * (0.2 + 0.6 * ((i % 3) / 2));
+        c.beginPath();
+        if (q[2]) { c.moveTo(col - w * 0.15, yy); c.lineTo(col + w * 0.15, yy); c.moveTo(col, yy - h * 0.08); c.lineTo(col, yy + h * 0.12); }
+        else { c.moveTo(col - w * 0.14, yy - h * 0.08); c.lineTo(col + w * 0.14, yy - h * 0.08); c.lineTo(col + w * 0.14, yy + h * 0.1); c.moveTo(col - w * 0.14, yy + h * 0.02); c.lineTo(col + w * 0.06, yy + h * 0.02); }
+        c.stroke();
+      }
+      c.restore();
+    }, { ph: 'deco', at: at });
+  }
+  def('seals', {
+    name: 'Collector Seals', who: 'Chinese scroll collectors', field: 'history', year: 1750,
+    about: 'Owners’ marks on old scrolls: brush ink in black, and a red seal stamped beside everything worth keeping.',
+    pen: 'brush', w: 4.4, ink: '#1a1a1a', accent: '#b8231c', font: { f: "'Caveat Brush', cursive" }, size: 28, hand: { wob: 0.5, over: 0.3, bend: 0.25 },
+    hl: 'rgba(184,35,28,0.2)',
+    after: function (B) {
+      if (B.m.mark !== 'circle' && B.m.mark !== 'box') return;
+      var b = B.b, s = B.s, z = 20 * s, x = B.E ? B.E.cx + B.E.rx * 0.8 + z * 0.4 : b.x + b.w + z * 0.9, y = B.E ? B.E.cy + B.E.ry * 0.7 + z * 0.3 : b.y + b.h + z * 0.4;
+      seal(B, Math.min(x, B.W - z), Math.min(y, B.H - z), z, z, [1.05, 1.3], 0.04);
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, P = besideNote(B, A, 16 * s);
+      seal(B, P[0], P[1], 18 * s, 30 * s, [1.3, 1.55], -0.03);
+    }
+  });
+
+  function mayaNumber(B, x, y, n, z, at) {
+    var bars = Math.floor(n / 5), dots = n % 5, s = B.s;
+    B.fn(function (c, u) {
+      c.save(); c.globalAlpha *= u; c.fillStyle = B.K.ink;
+      for (var i = 0; i < bars; i++) { var yy = y + z * 0.3 + i * z * 0.42; c.fillRect(x - z * 0.7, yy, z * 1.4, z * 0.26); }
+      for (var j = 0; j < dots; j++) dot(c, x + (j - (dots - 1) / 2) * z * 0.42, y, z * 0.15);
+      c.restore();
+    }, { ph: 'note', at: at });
+  }
+  def('maya', {
+    name: 'Maya', who: 'Maya scribes', field: 'history', year: 1200,
+    about: 'A folding bark-paper codex: rings drawn as rounded glyph blocks in red, Maya blue washes, a bar-and-dot number by each note.',
+    pen: 'ink', w: 3, ink: '#2a1a12', accent: '#b5452b', paper: '#ecdcb9', font: { f: "'Cinzel', 'Trajan Pro', serif", wt: 600 }, size: 19, caps: true,
+    hand: { wob: 0.4, over: 0.15, bend: 0.2 }, third: '#4f9aa0', hl: 'rgba(79,154,160,0.35)',
+    marks: {
+      circle: function (B) { glyphBlock(B); },
+      box: function (B) { glyphBlock(B); }
+    },
+    noteDeco: function (B, A) {
+      if (!A.R) return;
+      var s = B.s, z = 15 * s, P = besideNote(B, A, z);
+      mayaNumber(B, P[0], P[1] - z * 0.5, 13, z, [0.6, 1]);
+    }
+  });
+  function glyphBlock(B) {
+    var b = B.b, s = B.s, p = 9 * s, x = b.x - p, y = b.y - p, w = b.w + 2 * p, h = b.h + 2 * p, r = Math.min(h, w) * 0.32;
+    B.fill(rrectP(x, y, w, h, r), { col: alpha(B.st.third, 0.22), rev: 'fade', len: w * 0.3, comp: 'multiply' });
+    B.stroke(B.hand(resample(rrectP(x, y, w, h, r), 3 * s), 0.2), { col: B.K.accent });
+    B.stroke(B.hand(resample(rrectP(x - 5 * s, y - 5 * s, w + 10 * s, h + 10 * s, r + 5 * s), 3 * s), 0.2), { w: 1.4 });
+    B.edge = function (T) { return rectEdge(b, p + 9 * s, T); };
+  }
+
+  // ---- profiles: who each hand belonged to, in a few plain sentences
+  var BIOS = {
+    lyell: 'Charles Lyell (1797-1875) was a Scottish geologist. His Principles of Geology argued that the slow forces you can watch today, given enough time, shaped the whole Earth. Darwin read it on the Beagle.',
+    darwin: 'Charles Darwin (1809-1882) was an English naturalist. In 1837 he sketched a branching tree in Notebook B under the words "I think." Twenty-two years later On the Origin of Species made the case for evolution by natural selection.',
+    davinci: 'Leonardo da Vinci (1452-1519) was an Italian painter, engineer and anatomist. He filled thousands of notebook pages with machines, bodies and water, mostly in mirror writing. He was left-handed, and his hatching slopes the left-hander\'s way.',
+    hooke: 'Robert Hooke (1635-1703) was an English experimenter. His Micrographia (1665) showed a flea, a fly\'s eye and cork through a microscope, and gave us the word "cell." The plates were engraved from his own drawings.',
+    newton: 'Isaac Newton (1643-1727) was an English mathematician and physicist. His Principia (1687) set out the laws of motion and universal gravitation, proved with geometric diagrams where every point gets a letter.',
+    galileo: 'Galileo Galilei (1564-1642) was an Italian astronomer. In 1610 his Sidereus Nuncius showed mountains on the Moon and four moons circling Jupiter, logged night by night in little star diagrams.',
+    haeckel: 'Ernst Haeckel (1834-1919) was a German biologist who named thousands of species and coined the word "ecology." His Kunstformen der Natur (1899-1904) turned radiolarians and jellyfish into a hundred plates of symmetric art.',
+    cajal: 'Santiago Ramón y Cajal (1852-1934) was a Spanish neuroscientist. His ink drawings showed the brain is made of separate nerve cells, and his little arrows showed which way the signal runs. He shared the 1906 Nobel Prize.',
+    feynman: 'Richard Feynman (1918-1988) was an American physicist. His simple line diagrams of particles meeting and parting made quantum electrodynamics something you could draw on a blackboard. He shared the 1965 Nobel Prize.',
+    nightingale: 'Florence Nightingale (1820-1910) was an English nurse and statistician. Her 1858 rose diagram showed that more soldiers in the Crimean War died of preventable disease than of wounds. She was the first woman elected to the Royal Statistical Society.',
+    edison: 'Thomas Edison (1847-1931) was an American inventor who held over a thousand US patents, including the phonograph and a practical light bulb. Each patent came with formal drawings: ruled lines, lead lines and numbered parts.',
+    leavitt: 'Henrietta Swan Leavitt (1868-1921) was an American astronomer, hired as a "computer" at the Harvard Observatory to study glass photographic plates. She found that a Cepheid star\'s period gives its true brightness, the yardstick later used to measure the universe.',
+    anning: 'Mary Anning (1799-1847) hunted fossils on the cliffs of Lyme Regis in England. She found the first complete plesiosaur (1823) and Britain\'s first pterosaur. The Geological Society would not admit her, and men often published her finds without naming her.',
+    lovelace: 'Ada Lovelace (1815-1852) was an English mathematician. In 1843 she translated a paper on Charles Babbage\'s Analytical Engine and added Notes A to G, three times its length. Note G sets out steps for the machine to compute Bernoulli numbers, often called the first computer program.',
+    hopper: 'Grace Hopper (1906-1992) was an American computer scientist and a rear admiral in the US Navy. On the Harvard Mark II in 1947 her team taped a moth into the logbook as the "first actual case of bug being found." She built one of the first compilers and helped create COBOL.',
+    curie: 'Marie Curie (1867-1934) was a Polish-French physicist and chemist. With Pierre Curie she discovered polonium and radium in 1898. She was the first woman to win a Nobel Prize and the only person to win in two sciences. Her notebooks are still radioactive and kept in lead-lined boxes.',
+    merian: 'Maria Sibylla Merian (1647-1717) was a German naturalist and artist. At 52 she sailed to Surinam with her daughter to study insects. Her Metamorphosis (1705) painted each one through its life on its food plant, when many still thought insects grew out of mud.',
+    franklin: 'Rosalind Franklin (1920-1958) was an English chemist and X-ray crystallographer. Photo 51, made in her lab in 1952, showed DNA\'s helix. It was shown to James Watson without her knowledge. She died at 37, four years before the Nobel for the double helix went to three men.',
+    johnson: 'Katherine Johnson (1918-2020) was an American mathematician at NASA. She calculated the path of the first American in space, and before John Glenn\'s 1962 orbit he asked that she check the electronic computer\'s numbers by hand. She received the Presidential Medal of Freedom in 2015.',
+    ramanujan: 'Srinivasa Ramanujan (1887-1920) was an Indian mathematician, largely self-taught. In 1913 he wrote to G. H. Hardy at Cambridge with pages of results and was soon working there. His notebooks hold thousands of formulas, often with no proof, and people are still proving them.',
+    alhaytham: 'Ibn al-Haytham (about 965-1040) was a scholar from Basra who worked in Cairo. His Book of Optics showed that we see because light comes into the eye, not out of it, and he tested ideas with experiments. He is often called a pioneer of the scientific method.',
+    banneker: 'Benjamin Banneker (1731-1806) was a free Black American astronomer and surveyor, largely self-taught. He built a wooden clock, helped survey the boundary of Washington, D.C., and published almanacs from 1792. He wrote to Thomas Jefferson arguing against slavery.',
+    picasso: 'Pablo Picasso (1881-1973) was a Spanish painter and sculptor who co-founded Cubism. Later he made famous drawings in a single unbroken line, including ones drawn with light for a camera.',
+    dali: 'Salvador Dalí (1904-1989) was a Spanish Surrealist. The Persistence of Memory (1931) gave the world its melting watches, with ants crawling over one. His waxed mustache was nearly as famous.',
+    vangogh: 'Vincent van Gogh (1853-1890) was a Dutch painter. He painted The Starry Night in 1889 from his window at the asylum in Saint-Rémy, in thick swirling strokes. He sold very little in his lifetime.',
+    matisse: 'Henri Matisse (1869-1954) was a French painter. After surgery left him mostly in a wheelchair, he cut shapes from painted paper with scissors and called it drawing with scissors.',
+    mondrian: 'Piet Mondrian (1872-1944) was a Dutch painter of the De Stijl movement. He reduced painting to black lines and blocks of red, blue and yellow, as in Composition with Red, Blue and Yellow (1930).',
+    kandinsky: 'Wassily Kandinsky (1866-1944) was a Russian painter and Bauhaus teacher. His book Point and Line to Plane (1926) treated points, lines and colors like notes in music.',
+    pollock: 'Jackson Pollock (1912-1956) was an American painter. He laid canvases on the floor and poured, dripped and flung paint across them, most famously between 1947 and 1950.',
+    hokusai: 'Katsushika Hokusai (1760-1849) was a Japanese printmaker and painter. The Great Wave off Kanagawa (about 1831) used the new Prussian blue. He signed some late work "the old man mad about painting."',
+    warhol: 'Andy Warhol (1928-1987) was an American Pop artist. He silkscreened soup cans, Marilyn Monroe and dollar bills in loud color, often slightly out of register, at a studio he called the Factory.',
+    haring: 'Keith Haring (1958-1990) was an American artist. He drew in white chalk on the black paper covering empty New York subway ad panels, thousands of times. He was an AIDS activist and died of AIDS-related illness at 31.',
+    afklint: 'Hilma af Klint (1862-1944) was a Swedish painter. She made large abstract paintings years before Kandinsky, including The Ten Largest (1907). She asked that the work stay hidden until long after her death, and it was barely shown until the 1980s.',
+    kusama: 'Yayoi Kusama (born 1929) is a Japanese artist. Polka dots and "infinity nets" have covered her paintings, rooms and pumpkins since the 1950s. Her first Infinity Mirror Room opened in 1965.',
+    kahlo: 'Frida Kahlo (1907-1954) was a Mexican painter, best known for self-portraits made through years of pain after a bus accident at 18. She often painted words on ribbons and banners inside the picture.',
+    basquiat: 'Jean-Michel Basquiat (1960-1988) was an American painter from Brooklyn who started out writing SAMO graffiti. His paintings are full of crowns, copyright marks and crossed-out words. He said crossing words out made you want to read them more.',
+    ringgold: 'Faith Ringgold (1930-2024) was an American artist from Harlem. Her story quilts join painting, quilting and handwritten text. Tar Beach (1988), a girl flying over the city from her rooftop, became a picture book.',
+    lawrence: 'Jacob Lawrence (1917-2000) was an American painter raised in Harlem. His Migration Series (1940-41) told the Great Migration of Black Americans to the North in 60 numbered panels, each with a caption.',
+    lascaux: 'The Lascaux cave in southwest France holds paintings about 17,000 years old: horses, aurochs and deer in charcoal and ochre. Teenagers found it in 1940. Hand stencils like the one in this style appear in caves across Europe, and one study of their size suggests many were made by women.',
+    scriptorium: 'A scriptorium was the writing room of a medieval monastery or convent, where books were copied by hand. Monks and nuns both did the work: in 2019, lapis lazuli found in a medieval woman\'s teeth showed she had been painting with the costliest blue.',
+    champollion: 'Jean-François Champollion (1790-1832) was a French scholar who deciphered Egyptian hieroglyphs in 1822, starting from royal names on the Rosetta Stone. The ring around those names, the cartouche, was the Egyptian scribes\' own mark.',
+    bayeux: 'The Bayeux Tapestry is a strip of embroidered linen about 70 meters long telling the Norman conquest of England in 1066. It is stitched, not woven, most likely by English women, whose names were not recorded.',
+    mercator: 'Gerardus Mercator (1512-1594) was a Flemish mapmaker. His 1569 world map stretched the globe so that a constant compass course shows as a straight line, which is why sailors loved it.',
+    minard: 'Charles Joseph Minard (1781-1870) was a French civil engineer. His 1869 map of Napoleon\'s march on Moscow shows the army as a band that thins from 422,000 men to about 10,000.',
+    bletchley: 'Bletchley Park was Britain\'s codebreaking center in the Second World War, where Enigma and other ciphers were broken. By 1945 about three quarters of its roughly 10,000 staff were women.',
+    apollo: 'Mission control in Houston ran the Apollo flights, writing on consoles and plotting boards with grease pencils. Poppy Northcutt, who worked out return paths for Apollo 8, was the first woman engineer in that room.',
+    perkins: 'Maxwell Perkins (1884-1947) was an American book editor at Scribner\'s. He edited F. Scott Fitzgerald, Ernest Hemingway and Thomas Wolfe, and Gatsby (1925) went through his pencil.',
+    hildegard: 'Hildegard of Bingen (1098-1179) was a German abbess, writer and composer. Her book Scivias (1151) set down her visions, and its pictures are full of gold rings and red flame. She also wrote on medicine and plants, and her music is still sung.',
+    aljazari: 'Ismail al-Jazari (1136-1206) was an engineer at a court in what is now southeast Turkey. His Book of Knowledge of Ingenious Mechanical Devices (1206) drew fifty machines, from water-raising pumps to an elephant clock, with every part named.',
+    seals: 'Chinese collectors stamped red seals and wrote inscriptions on the paintings and calligraphy they owned, so an old scroll carries the marks of everyone who treasured it. The Qianlong Emperor (reigned 1735-1796) stamped and inscribed a great many, some of them dozens of times.',
+    maya: 'Maya scribes wrote in a script of glyph blocks on folding books of bark paper. Only four of those books survive, among them the Dresden Codex. Their bar-and-dot numbers used a sign for zero.'
+  };
+  Object.keys(BIOS).forEach(function (k) { if (STYLES[k]) STYLES[k].bio = BIOS[k]; });
 
   // ---------------------------------------------------------------- build a mark
   function skinFor(m, st) {
@@ -1905,7 +2584,7 @@
     version: VERSION,
     play: play, stop: stop, replay: replay, draw: draw, length: length, auto: auto, fire: fire,
     speeds: SPEEDS,
-    styles: Object.keys(STYLES).map(function (k) { var o = STYLES[k]; return { id: k, name: o.name, who: o.who, field: o.field, year: o.year, about: o.about, ground: o.ground || 'light', paper: o.paper || null, font: o.font.f }; }),
+    styles: Object.keys(STYLES).map(function (k) { var o = STYLES[k]; return { id: k, name: o.name, who: o.who, field: o.field, year: o.year, about: o.about, bio: o.bio || '', ground: o.ground || 'light', paper: o.paper || null, font: o.font.f }; }),
     marks: Object.keys(MARKS), fields: FIELDS, pens: Object.keys(PENS),
     _internal: { STYLES: STYLES, MARKS: MARKS, PENS: PENS, build: build, resolveList: resolveList }
   };
