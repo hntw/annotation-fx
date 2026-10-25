@@ -3,12 +3,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="utf-8">
 <title>Annotation FX</title>
-<meta name="description" content="Hand-drawn annotations in 51 styles from science, art and history, for photos, video and web pages.">
+<meta name="description" content="Hand-drawn annotations in 65 styles from science, art and history, for photos, video and web pages.">
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Homemade+Apple&family=Caveat:wght@400;500;600&family=Caveat+Brush&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Architects+Daughter&family=Pinyon+Script&family=Jost:wght@500;700&family=Permanent+Marker&family=Bungee&family=Rock+Salt&family=UnifrakturMaguntia&family=Cinzel:wght@600&family=Uncial+Antiqua&family=Special+Elite&family=La+Belle+Aurore&family=Reenie+Beanie&family=Nothing+You+Could+Do&family=Patrick+Hand&family=Kalam:wght@400&family=Amiri&family=Gochi+Hand&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a collections drawer. The title annotates itself, a working bench, then 51 specimen cards in three drawers. */
+/* Layout: a collections drawer. The title annotates itself, a working bench, then a specimen card per style in three drawers. */
 :root {
   --ground: #e9ebe6;
   --sheet: #f7f8f4;
@@ -111,6 +112,8 @@ pre { margin: 0; background: var(--code-bg); border: 1px solid var(--rule); bord
 .tile .yr { font: 500 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tile .id { font: 500 12px var(--mono); color: var(--pencil-ink); }
 .tile figcaption p { font-size: 14px; color: var(--muted); }
+.tile .src { font-size: 12.5px; }
+.tile .src a { color: var(--pencil-ink); }
 .tile .bio summary { font: 500 12px var(--mono); color: var(--pencil-ink); cursor: pointer; width: max-content; }
 .tile .bio p { margin-top: 6px; font-size: 14px; color: var(--ink); }
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
@@ -140,14 +143,14 @@ footer { border-top: 1px solid var(--rule); padding-top: 18px; font-size: 13px; 
 
 <div class="wrap">
   <header class="hero">
-    <div class="eyebrow">Motion graphics library · v1.2</div>
+    <div class="eyebrow">Motion graphics library · v2.0</div>
     <div class="hero-mark" id="heroBox"><h1><span id="hA">Annotation</span> <span id="hF">FX</span></h1></div>
-    <p class="lede">Circles, underlines, arrows and margin notes that draw themselves, in the hands of 51 people from science, art and history. Lyell lays highlights down as rock strata. Darwin's arrows branch into a tree. Anning's rings end in an ammonite. Basquiat crowns what matters. Dalí's circles melt. Point it at a word, a face in a photo or an object in running video.</p>
+    <p class="lede">Circles, underlines, arrows and margin notes that draw themselves, in the hands of <span class="nStyles">65</span> people from science, art and history. Each hand is built from a real page that person wrote, and every card says which one. Darwin's arrows branch into his tree of life. Tagore blacks out a word and threads it to the next. Basquiat crowns what matters. Churchill pins on ACTION THIS DAY. Bob Ross signs off with a red sweep. Point it at a word, a face in a photo or an object in running video.</p>
     <div class="hero-row">
       <button class="btn" id="shuffle" type="button">Another hand</button>
       <span class="now" id="heroNow"></span>
     </div>
-    <div class="facts"><span><b>51</b> styles</span><span><b>10</b> marks</span><span><b>24</b> pens</span><span><b>1</b> file, no dependencies</span></div>
+    <div class="facts"><span><b class="nStyles">65</b> styles</span><span><b>10</b> marks</span><span><b id="nPens">24</b> pens</span><span><b>1</b> file, no dependencies</span></div>
   </header>
 
   <section id="try">
@@ -294,18 +297,23 @@ AnnotationFX.draw(ctx, t, 1920, 1080, { style: 'lyell',
   var ROCK = [118, 232, 1462, 680];
   var NOTES = {
     lyell: 'older beds below', darwin: 'I think', davinci: 'the eye deceives', hooke: 'as seen through the glass', newton: 'Q.E.D.',
-    galileo: 'a new world', haeckel: 'art forms of nature', cajal: 'signal runs this way', feynman: 'draw the diagram',
+    galileo: 'a new world', cajal: 'signal runs this way', feynman: 'draw the diagram',
     nightingale: 'preventable!', edison: '12', leavitt: 'variable?', picasso: 'forms!', dali: 'soft forms', vangogh: 'the stars move',
-    matisse: 'drawing with scissors', mondrian: 'no curves', kandinsky: 'point, line, plane', pollock: 'let it fly',
-    hokusai: 'the wave rises', warhol: 'POP!', haring: 'radiant', lascaux: 'we were here', scriptorium: 'Nota bene',
+    matisse: 'drawing with scissors', mondrian: 'no curves', kandinsky: 'point, line, plane',
+    hokusai: 'the wave rises', warhol: 'POP!', haring: 'radiant', scriptorium: 'Nota bene',
     champollion: 'a royal name', bayeux: 'HIC: ENDLESS FORMS', mercator: 'terra incognita', minard: '422,000 set out',
-    bletchley: 'decrypt by 0900', apollo: 'GO FOR TLI', perkins: 'cut this?',
+    bletchley: 'decrypt by 0900', kranz: 'GO FOR TLI', perkins: 'cut this?',
     anning: 'I found it', lovelace: 'see Note G', hopper: 'first actual bug', curie: 'it glows', merian: 'egg to wing',
-    franklin: 'Photo 51', johnson: 'numbers check out', ramanujan: 'no proof needed', alhaytham: 'light enters the eye',
-    banneker: 'eclipse due', afklint: 'for the temple', kusama: 'infinity', kahlo: 'viva la vida', basquiat: 'crown it',
-    ringgold: 'we can fly', lawrence: 'they arrived', hildegard: 'living light', aljazari: 'water turns it', seals: 'treasured',
-    maya: 'count the days'
+    franklin: 'Photo 51', ramanujan: 'no proof needed',
+    banneker: 'eclipse due', afklint: 'for the temple', kusama: 'love forever', kahlo: 'viva la vida', basquiat: 'crown it',
+    ringgold: 'we can fly', lawrence: 'they arrived', aljazari: 'water turns it', qianlong: 'treasured',
+    maya: 'count the days', ross: 'happy little accident', dickinson: 'Wild nights!', beethoven: 'start again',
+    tagore: 'where the mind is free', hurston: 'look here', lincoln: 'shall not perish', churchill: 'Await full list.',
+    napoleon: 'faster!', jefferson: 'self-evident', douglass: 'no peace without justice', gandhi: 'write it twice',
+    elizabeth: 'Elizabeth R', mandela: 'day 10,000', bell: 'N.E. by E.', pizan: 'city of ladies', carver: 'try the peanut',
+    raman: 'the light shifts', seacole: 'Crimea, 1855', okeeffe: 'look closer', klee: 'a dot went for a walk'
   };
+
   var byId = {}; A.styles.forEach(function (s) { byId[s.id] = s; });
   var STY = A.styles.slice().sort(function (a, b) { return a.year - b.year; });
   function yr(y) { return y < 0 ? Math.abs(y).toLocaleString('en-US') + ' BCE' : String(y); }
@@ -316,7 +324,7 @@ AnnotationFX.draw(ctx, t, 1920, 1080, { style: 'lyell',
   function tile(s) {
     var fig = document.createElement('figure'); fig.className = 'tile';
     fig.innerHTML = '<div class="frame" tabindex="0" role="button"><div class="spec"><p>from so <span class="w1">simple</span> a beginning endless forms <span class="w2">most beautiful</span> and most wonderful have been, and are being, <span class="w3">evolved.</span></p></div></div>' +
-      '<figcaption><div class="who"><h4></h4><span class="yr"></span></div><span class="id"></span><p></p><details class="bio"><summary>Who</summary><p></p></details></figcaption>';
+      '<figcaption><div class="who"><h4></h4><span class="yr"></span></div><span class="id"></span><p></p><p class="src"></p><details class="bio"><summary>Who</summary><p></p></details></figcaption>';
     var fr = fig.querySelector('.frame'), spec = fig.querySelector('.spec');
     fr.style.background = frameBg(s); fr.style.color = frameInk(s);
     fr.setAttribute('aria-label', 'Replay ' + s.name);
@@ -324,6 +332,8 @@ AnnotationFX.draw(ctx, t, 1920, 1080, { style: 'lyell',
     fig.querySelector('.yr').textContent = s.who + ', ' + yr(s.year);
     fig.querySelector('.id').textContent = "style: '" + s.id + "'";
     fig.querySelector('figcaption p').textContent = s.about;
+    var src = fig.querySelector('.src');
+    if (s.source) { src.textContent = 'From: ' + s.source.text + '. ' + s.source.where + '. '; if (s.source.url) { var a = document.createElement('a'); a.href = s.source.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'See it'; src.appendChild(a); } } else src.remove();
     fig.querySelector('.bio p').textContent = s.bio;
     $('g' + A.fields[s.field]).appendChild(fig);
     var o = { style: s.id, scale: 1.45, stagger: 0.7, marks: [
@@ -340,7 +350,7 @@ AnnotationFX.draw(ctx, t, 1920, 1080, { style: 'lyell',
   $('optStyles').textContent = A.styles.map(function (s) { return s.id; }).join(', ');
 
   // hero: the title marks itself, in a different hand each time
-  var order = ['darwin', 'basquiat', 'anning', 'dali', 'kusama', 'feynman', 'hildegard', 'mondrian', 'hopper', 'vangogh', 'kahlo', 'bletchley', 'lovelace', 'haring'], hi = 0;
+  var order = ['darwin', 'basquiat', 'anning', 'dali', 'kusama', 'feynman', 'tagore', 'mondrian', 'hopper', 'vangogh', 'kahlo', 'bletchley', 'lovelace', 'haring', 'ross', 'churchill', 'kranz'], hi = 0;
   function hero() {
     var s = byId[order[hi % order.length]], ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
     var dark = s.ground === 'dark' || parseFloat(getComputedStyle(document.body).backgroundColor.replace(/[^\d,]/g, '').split(',')[0]) < 128;
@@ -513,11 +523,9 @@ AnnotationFX.draw(ctx, t, 1920, 1080, { style: 'lyell',
   });
 
   // canvas text needs its fonts loaded first, so wait for them (briefly) before anything draws
-  var FAM = ['IM Fell English', 'IM Fell English SC', 'Homemade Apple', 'Caveat', 'Caveat Brush', 'Cormorant Garamond', 'Architects Daughter',
-    'Pinyon Script', 'Jost', 'Permanent Marker', 'Bungee', 'Rock Salt', 'UnifrakturMaguntia', 'Cinzel', 'Uncial Antiqua', 'Special Elite',
-    'La Belle Aurore', 'Reenie Beanie', 'Nothing You Could Do', 'Patrick Hand', 'Kalam', 'Amiri', 'Gochi Hand'];
-  var loads = document.fonts ? FAM.map(function (f) { return document.fonts.load('24px "' + f + '"').catch(function () {}); }) : [];
-  if (document.fonts) loads.push(document.fonts.load('italic 24px "IM Fell English"').catch(function () {}), document.fonts.load('italic 600 24px "Cormorant Garamond"').catch(function () {}));
+  document.querySelectorAll('.nStyles').forEach(function (el) { el.textContent = A.styles.length; });
+  $('nPens').textContent = A.pens.length;
+  var loads = [A.loadFonts()];
   var timeout = new Promise(function (r) { setTimeout(r, 2500); });
   var keysP = fetch('media/demo/rock-pushin.keys.json').then(function (r) { return r.json(); }).then(function (k) { keys = k; }).catch(function () {});
   Promise.race([Promise.all(loads.concat([keysP, document.fonts ? document.fonts.ready : null])), timeout]).then(function () {

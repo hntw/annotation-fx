@@ -1,6 +1,6 @@
 {
   "name": "annotation-fx",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Hand-drawn annotations (circles, underlines, arrows, notes) in 51 styles from science, art and history, for photos, video and web pages.",
   "main": "annotationfx.js",
   "license": "MIT",

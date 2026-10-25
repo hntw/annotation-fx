@@ -2,13 +2,15 @@
 
 [![Annotation FX: the same line from Darwin marked in four hands (Darwin, Anning, Kahlo, Basquiat), drawn by the library itself](media/header.gif)](https://hntw.github.io/annotation-fx/)
 
-Circles, underlines, arrows and margin notes that draw themselves, in the hands of 51 people from science, art and
+Circles, underlines, arrows and margin notes that draw themselves, in the hands of 65 people from science, art and
 history. Lyell lays highlights down as rock strata. Darwin's arrows branch into a tree. Anning's rings end in an
 ammonite. Basquiat crowns what matters. Dalí's circles melt.
 Point it at a word, a face in a photo or an object in running video, and render transparent overlays for video editors.
 One file, no dependencies, MIT.
 
 **Live demo:** https://hntw.github.io/annotation-fx/
+
+**New in v2:** every style is rebuilt from a real page in that person's hand. See [how we did it, and the breaking changes](NOTES-v2.md).
 
 ## Marks
 
@@ -19,11 +21,12 @@ Any mark takes a `note`, written beside it with a leader line on the side with t
 
 | field | styles |
 |---|---|
-| Science | alhaytham, davinci, galileo, hooke, newton, merian, banneker, anning, lyell, darwin, lovelace, nightingale, edison, cajal, curie, haeckel, leavitt, ramanujan, hopper, feynman, franklin, johnson |
-| Art | hokusai, vangogh, afklint, mondrian, kahlo, kandinsky, dali, lawrence, picasso, pollock, matisse, warhol, kusama, basquiat, haring, ringgold |
-| History | lascaux, bayeux, hildegard, scriptorium, aljazari, maya, mercator, seals, champollion, minard, perkins (default), bletchley, apollo |
+| Science | lyell, darwin, davinci, hooke, newton, galileo, cajal, feynman, nightingale, edison, leavitt, anning, lovelace, hopper, curie, merian, franklin, ramanujan, banneker, carver, raman, seacole |
+| Art | picasso, dali, vangogh, matisse, mondrian, kandinsky, hokusai, warhol, haring, afklint, kusama, kahlo, basquiat, ringgold, lawrence, ross, dickinson, beethoven, tagore, hurston, okeeffe, klee |
+| History | scriptorium, champollion, bayeux, mercator, minard, bletchley, kranz, perkins (default), aljazari, qianlong, maya, lincoln, churchill, napoleon, jefferson, douglass, gandhi, elizabeth, mandela, bell, pizan |
 
-The styles are homages drawn from each figure's known habits, not reproductions of their work.
+Each style is built from a real page in that person's hand (a letter, notebook, manuscript or signature) and
+`source` says which one and where it is held. They are homages to those habits, not reproductions of the work.
 `AnnotationFX.styles` lists each with its name, year, a one-line description of the style and `bio`, a short profile of
 the person (or the people) behind it. The demo shows each profile under its card.
 
@@ -74,8 +77,8 @@ AnnotationFX.play(video, { sync: 'media', marks: [{ mark: 'circle', box: [...], 
 `start`, `stop`, `replay`, `pause`, `resume`, `fire`, `reset`, `seek(t)` and `time()`; `AnnotationFX.fire(el, which)` works
 from anywhere.
 
-Canvas text needs the web fonts loaded before the first frame; the demo page loads the Google Fonts listed in its
-`<link>` and waits on `document.fonts.load` before playing.
+Canvas text needs the web fonts loaded before the first frame. `AnnotationFX.loadFonts(ids)` adds the Google Fonts
+for the styles you name (or all of them) and resolves when they are ready: `AnnotationFX.loadFonts(['darwin']).then(go)`.
 
 ## Render overlays for video
 

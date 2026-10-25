@@ -1,5 +1,5 @@
 // Draws every style x mark across the timeline on a do-nothing canvas and counts throws (node test/smoke.js)
-const A = require('../annotationfx.js');
+const A = require(process.env.LIB ? require('path').resolve(process.env.LIB) : '../annotationfx.js');
 const grad = { addColorStop() {} };
 function fakeCtx() {
   const st = { font: '10px x', globalAlpha: 1 };

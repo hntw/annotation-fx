@@ -1,7 +1,7 @@
 <!doctype html><meta charset="utf-8">
 <!-- The README header and demo loop, drawn by annotationfx.js itself. window.render(t) paints frame t (seconds) of the
      loop; ?t= paints that frame on load (no ?t: a showcase still). ?z= pixel ratio. Render: node media/anim.mjs -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:wght@400&family=Figtree:wght@400;500&family=JetBrains+Mono:wght@500&family=Homemade+Apple&family=Caveat:wght@600&family=Caveat+Brush&family=Pinyon+Script&family=Special+Elite&family=La+Belle+Aurore&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Source+Serif+4:wght@400&family=Figtree:wght@400;500&family=JetBrains+Mono:wght@500&display=swap">
 <body style="margin:0;background:#e9ebe6">
 <canvas id="c"></canvas>
 <script src="../annotationfx.js"></script>
@@ -89,7 +89,7 @@ function render(t) {
 
 window.LOOP = LOOP; window.render = render;
 window.ready = Promise.all([`400 68px ${DISPLAY}`, `400 ${FS}px ${SERIF}`, `400 21px ${SANS}`, `500 14px ${MONO}`,
-  "24px 'Homemade Apple'", "600 30px Caveat", "32px 'Caveat Brush'", "34px 'Pinyon Script'", "21px 'Special Elite'", "25px 'La Belle Aurore'", "25px 'Permanent Marker'"]
+  AnnotationFX.loadFonts(SHOTS.map(x => x.style))]
   .map(f => document.fonts.load(f)))
   .then(() => { layout(); render(q.has('t') ? +q.get('t') : 3.4); document.title = 'ready'; });
 </script>
