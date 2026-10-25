@@ -60,9 +60,9 @@ function render(t) {
   x.fillText('Annotation FX', 60, 272);
   AnnotationFX.draw(x, 20, W, H, { style: 'perkins', mark: 'circle', box: [60 + aw - 4, 216, fw + 8, 66], seed: 3 });
   x.fillStyle = MUTED; x.font = `400 21px ${SANS}`;
-  ['Circles, underlines, arrows and notes that', 'draw themselves, in 51 hands from science,', 'art and history.'].forEach((l, i) => x.fillText(l, 64, 360 + i * 31));
+  ['Circles, underlines, arrows and notes that', 'draw themselves, in ' + AnnotationFX.styles.length + ' hands from science,', 'art and history.'].forEach((l, i) => x.fillText(l, 64, 360 + i * 31));
   x.fillStyle = INK; x.font = `500 14px ${MONO}`;
-  x.fillText('51 styles   10 marks   1 file', 64, 488);
+  x.fillText(AnnotationFX.styles.length + ' styles   10 marks   1 file', 64, 488);
 
   // the page with this shot's marks
   x.save();
@@ -88,8 +88,7 @@ function render(t) {
 }
 
 window.LOOP = LOOP; window.render = render;
-window.ready = Promise.all([`400 68px ${DISPLAY}`, `400 ${FS}px ${SERIF}`, `400 21px ${SANS}`, `500 14px ${MONO}`,
-  AnnotationFX.loadFonts(SHOTS.map(x => x.style))]
-  .map(f => document.fonts.load(f)))
+window.ready = Promise.all([`400 68px ${DISPLAY}`, `400 ${FS}px ${SERIF}`, `400 21px ${SANS}`, `500 14px ${MONO}`]
+  .map(f => document.fonts.load(f)).concat(AnnotationFX.loadFonts(SHOTS.map(x => x.style))))
   .then(() => { layout(); render(q.has('t') ? +q.get('t') : 3.4); document.title = 'ready'; });
 </script>
